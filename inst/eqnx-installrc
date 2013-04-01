@@ -1,0 +1,186 @@
+#!/bin/sh
+# 
+# Equinox SST driver for Linux.
+#
+# Copyright (C) 1999-2007 Equinox Systems Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+# Equinox SST Loadable Module installation script
+
+#
+#	install / remove eqnx startup script from appropriate
+#	boot script mechanism.  Note that this varies based on linux
+#	distribution
+#
+#	-i	: install eqnx startup script (default)
+#	-v 	: verbose option, additional inforamation is displayed
+#	-u 	: un-install eqnx startup script
+
+#
+#
+# do_install 
+#	install eqnx startup script
+#
+do_install() {
+
+	PATH=$PATH:/sbin
+	which chkconfig > /dev/null 2>&1
+	CHK=$?
+	chkconfig > /dev/null 2>&1
+	RES=$?
+	if [ $CHK -eq 0 -a $RES -eq 0 ] 
+	then	
+		if [ ${VERBOSE} -eq 1 ]
+		then
+			echo "     boot installation method = chkconfig"
+		fi
+		if [ -d /etc/init.d ]
+		then
+			cp -f /usr/sbin/rc.eqnx /etc/init.d/eqnx > /dev/null 2>&1
+		else
+			mkdir -p /etc/rc.d/init.d		> /dev/null 2>&1
+			cp -f /usr/sbin/rc.eqnx /etc/rc.d/init.d/eqnx > /dev/null 2>&1
+		fi
+		chkconfig --add eqnx
+	elif [ -x /sbin/insserv ]
+	then
+		if [ ${VERBOSE} -eq 1 ]
+		then
+			echo "     boot installation method = insserv"
+		fi
+		cp -f /usr/sbin/rc.eqnx /etc/rc.d/eqnx		> /dev/null 2>&1
+		/sbin/insserv /etc/rc.d/eqnx			> /dev/null 2>&1
+	elif [ -d /etc/rc.d/rc2.d ] 
+	then
+		if [ ${VERBOSE} -eq 1 ]
+		then
+			echo "     boot installation method = /etc/rc.d/rcN.d scripts"
+		fi
+		cp -f /usr/sbin/rc.eqnx /etc/rc.d/eqnx		> /dev/null 2>&1
+		ln -s /etc/rc.d/eqnx /etc/rc.d/rc2.d/S90eqnx > /dev/null 2>&1
+		ln -s /etc/rc.d/eqnx /etc/rc.d/rc3.d/S90eqnx > /dev/null 2>&1
+		ln -s /etc/rc.d/eqnx /etc/rc.d/rc4.d/S90eqnx > /dev/null 2>&1
+		ln -s /etc/rc.d/eqnx /etc/rc.d/rc5.d/S90eqnx > /dev/null 2>&1
+	elif [ -d /etc/rc2.d ]
+	then
+		if [ ${VERBOSE} -eq 1 ]
+		then
+			echo "     boot installation method = /etc/rcN.d scripts"
+		fi
+		mkdir -p /etc/init.d				> /dev/null 2>&1
+		cp -f /usr/sbin/rc.eqnx /etc/init.d/eqnx	> /dev/null 2>&1
+		ln -s /etc/init.d/eqnx /etc/rc2.d/S90eqnx > /dev/null 2>&1
+		ln -s /etc/init.d/eqnx /etc/rc3.d/S90eqnx > /dev/null 2>&1
+		ln -s /etc/init.d/eqnx /etc/rc4.d/S90eqnx > /dev/null 2>&1
+		ln -s /etc/init.d/eqnx /etc/rc5.d/S90eqnx > /dev/null 2>&1
+	elif [ -f /etc/rc.d/rc.local ]
+	then
+		if [ ${VERBOSE} -eq 1 ]
+		then
+			echo "     boot installation method = /etc/rc.d/rc.local script"
+		fi
+		echo "                                   # Equinox eqnx" >> /etc/rc.d/rc.local
+		echo "if [ -e /usr/sbin/rc.eqnx ] ; then # Equinox eqnx" >> /etc/rc.d/rc.local
+		echo "   /usr/sbin/rc.eqnx start         # Equinox eqnx" >> /etc/rc.d/rc.local
+		echo "fi                                 # Equinox eqnx" >> /etc/rc.d/rc.local
+	else
+		echo "Cannot determine how drivers are invoked at boot time."
+		echo "Please perform the necessary process to ensure that"
+		echo "/usr/sbin/rc.eqnx is invoked at boot time."
+	fi
+}
+
+#
+# do_remove
+#	remove eqnx startup script
+#
+do_remove() {
+
+	PATH=$PATH:/sbin
+	which chkconfig > /dev/null 2>&1
+	CHK=$?
+	chkconfig > /dev/null 2>&1
+	RES=$?
+	if [ $CHK -eq 0 -a $RES -ne 0 ] 
+	then	
+		chkconfig --del eqnx
+		if [ -d /etc/init.d ]
+		then
+			rm -f /etc/init.d/eqnx  > /dev/null 2>&1
+		else	rm -f /etc/rc.d/init.d/eqnx > /dev/null 2>&1
+		fi
+	elif [ -x /sbin/insserv ]
+	then
+		/sbin/insserv -r eqnx
+	elif [ -d /etc/rc.d/rc2.d ] 
+	then
+		rm -f /etc/rc.d/rc[2345].d/S90eqnx > /dev/null 2>&1
+		rm -f /etc/rc.d/eqnx		> /dev/null 2>&1
+	elif [ -d /etc/rc2.d ]
+	then
+		rm -f /etc/rc[2345].d/S90eqnx > /dev/null 2>&1
+		rm -f /etc/init.d/eqnx		> /dev/null 2>&1
+	elif [ -f /etc/rc.d/rc.local ]
+	then
+		cp /etc/rc.d/rc.local /tmp/rc.local
+		sed '/eqnx/ D' /tmp/rc.local > /etc/rc.d/rc.local
+	fi
+}
+
+#######################################################################
+#	main
+
+
+#
+# get the options
+#
+INSTALL=0;
+REMOVE=0;
+VERBOSE=0;
+
+set -- `getopt iuv $*`
+
+for i in $*
+do
+	case $i in
+	-i) INSTALL=1;
+	    shift ;;
+	-u) REMOVE=1;
+	    shift ;;
+	-v) VERBOSE=1;
+	    shift ;;
+	--) shift ; break;;
+	esac
+done
+	
+if [ ${REMOVE} -eq 0 ]
+then
+	INSTALL=1
+fi
+
+if [ ${INSTALL} -eq 1 ] 
+then
+	do_install 
+	exit 0
+fi
+
+if [ ${REMOVE} -eq 1 ] 
+then
+	do_remove 
+	exit 0
+fi
+
+exit 0

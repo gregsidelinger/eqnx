@@ -1,0 +1,23 @@
+#!/usr/bin/perl
+#
+#	Return RPM variable value
+#     
+
+use strict;
+my $showrc_output = `rpm --showrc`;
+my $findvar;
+$findvar = sub {
+    my $var = shift;
+    if ($showrc_output =~ /^\-\d+\:\s+\Q$var\E\s+(.*)$/m) {
+	my $value = $1;
+	$value =~ s/\%\{(.*?)\}/&$findvar($1)/eg;
+	$value;
+    } else {
+	print STDERR "Unknown RPM variable: $var\n";
+	exit 1;
+    }
+};
+
+my $val = &$findvar($ARGV[0]);
+print "$val\n";
+exit 0;

@@ -1,0 +1,95 @@
+The EQUINOX ssdiag utility
+------------------------------------------------------------------------------
+
+
+The Equinox ssdiag utility is a standalone program which provides the
+SST customer with the ability perform diagnostic operations. Diagnostic
+Operations such as lead status monitoring, viewing port parameter settings
+and board functionality test are included.
+
+The user interface is a graphical pull down menu system. To start the program
+simply execute ssdiag. The main menu displays four horizontal selections.
+These are Driver Status, Port Status, Diagnostics, and Quit. At the horizontal
+menu the user can use the left and right arrow keys (to change the horizontial
+selection) or the up and down arrow keys (to move through vertical selections)
+Pressing enter selects the highlighted menu selection. Additionly, pressing the
+F1 key activates context sensitive help which pops up a window which contains
+help on the highlighted item.
+
+
+Driver Status
+-----------------------------------------------------------------------------
+
+This item displays the device driver's current configuration. Use this
+selection to show such things as driver version, the number of boards
+configured, number of boards found, slot number (MCA only) and memory mapping.
+
+
+
+Port status
+-----------------------------------------------------------------------------
+
+The status menu displays three vertical selections. These are Port Status,
+Termio, and Register Dump. These features allow you view certain port
+characteristics. A description of each and typical usage follows.
+
+Port Status
+
+The Port Status selection displays an on screen signal display of the selected
+device. First, you are prompted for the device. After entering the device the
+user is presented with an on screen real-time representation of the RS232 leads.
+Additionally, transmit rate, receive rate, total characters received, total characters transmitted and buffered data counts are displayed.
+
+This display should prove useful in trouble shooting wiring problems,
+chattering lines or devices(modems) and monitoring load activity over a
+single line. Activity measurements can be taken by noting the Transmitted
+and Received counts and comparing them with those of other ports.
+
+Termio
+
+This selection outputs the general terminal interface data associated with
+SST device. It is similar to the stty command in that it prints all 
+enabled termio flags.
+
+Register Dump
+
+This option displays a real-time window of the onboard registers. The data is
+in raw form and only useful to Equinox technical personnel. It is used to
+obtain valuable information about the hardware status and various software
+flags.
+
+Diagnostics
+
+The diagnostic's menu displays two vertical selections. These are Loopback 
+and Send. These selections allow you to perform diagnostic operations. They
+are intended for the experienced user. The Loopback test is designed to test
+the boards primary components and their functionality. The Send test simply
+writes a barber pole pattern to the specified port A brief description of 
+these test follows.
+
+Loopback
+
+This item allows you to configure and run the Loopback test. The test does
+require that the selected port(s) have the transmit and receive pins wired
+together. The program starts by writing a data pattern to the selected port(s)
+and  reading the data back and comparing it to pattern written out. The program 
+reports, at regular intervals, the number of characters transmitted and
+received, errors and calculated receive rates. The data transmitted is a
+ascending pattern that starts at 1 decimal to 256 decimal. It is highly
+recommended (in external loopback mode) that the port(s) under test have the
+devices disconnected. Instead a loop back connector should be attached which
+ties the port's transmit and receive signals together. While running in 
+external loopback mode Terminals or printers connected to ports that are 
+sending the data pattern will probably hang. 
+
+Send
+
+This item allows the user to send a barber pole to the selected port. 
+It simply writes all printable alpha-numeric characters to port. It should
+be helpful when adding a new device and a continuous stream of data is
+required to resolved wiring issues. The port configuration is 8 data bits,
+1 stop bit and no parity.
+
+
+
+

@@ -1,0 +1,224 @@
+Linux SST Release Notes
+-----------------------
+
+This release package provides an installable version of the eqnx driver 
+version 4.12d for Linux systems.  The driver will run on Intel (i386),
+Itanium (ia64) systems and Xeon/Athelon type systems (x86_64).
+
+Installation
+------------
+
+Please refer to the installation notes (INSTALL.TXT) for a full directions
+on installing and removing the eqnx product.  
+
+These will usually be located at /usr/share/doc/eqnx-4.12/INSTALL.TXT.  
+However, on some systems, the install notes may be located under a different
+directory.
+
+Installation notes are also available on the Equinox web-site: www.equinox.com.
+
+Changes in 4.12d
+----------------
+
+1. Changes to comply with 2.6.36 kernels.
+
+Changes in 4.12c
+----------------
+
+1. Changes to comply with 2.6.29 kernels.
+
+Changes in 4.12
+----------------
+
+1. Changes to comply with kernel changes in 2.6.18 kernels:
+   - UTS_RELEASE string moved from version.h to utsrelease.h
+   - TTY_DRIVER_NO_DEVFS replaced with TTY_DRIVER_DYNAMIC_DEV.
+2. Changes to comply with kernel changes in 2.6.18 kernels:
+   - linux/config.h is no longer present.
+3. Changes to comply with kernel changes in 2.6.20 kernels:
+   - termios is now called ktermios in the kernel.
+   - workqueue changes.  Remove unused workqueue and deferred service routine.
+
+Changes in 4.11
+----------------
+
+1. Fix to driver unload routine which could panic with later releases.  The
+   module usage count was not being kept properly.  Also fixed spin lock problem   during driver unload.
+2. Support for 2.6.16 kernels.
+3. Fixed problem where device files are being lost after a reboot following
+   an unclean shutdown.
+4. Changed build to eliminate svn files and fix for ssmkn build.
+5. Fixed problem with ssmkn getting bad device file number after prelink.
+
+Changes in 4.10
+---------------
+
+1. Added alternative kernel source path - /lib/modules/<kernel version>/build.
+
+2. Remove extraneous "lvalue casting" in the driver which is prohibited
+   by later versions of gnu gcc compiler.
+
+3. Fix to driver "megamint" routine, which was not correctly doing hangup on
+   DCD drop in 2.6 kernels.  
+
+4. Fix copyright in eqnx.spec file.
+
+5. Changed the package install/build process to:
+   a. Determine kernel source and kernel object location if built
+      in seperate locations (2.6 kernels). Otherwise, assumed that
+      kernel object is in the same location as kernel source.
+   b. accept the environment variables KERNELSRC and KERNELOBJ.  If
+      KERNELSRC is set, it specifies the location of kernel source,
+      which bypasses the tests done in the scripts and makefiles.
+      If KERNELOBJ is set, it specifies the location of kernel object.
+      If not set, assumed same as kernel source.
+
+6. Change so that the RTS signal cannot be explicitly turned off when
+   hardware flow control is enabled.
+
+Changes in 4.09
+---------------
+
+1. Modification to driver start-up process.
+
+2. Eliminate requirement to build utilities using kernel header files.
+
+3. Modified ioctl interface routines.
+
+4. Fixed oops problem occurring in close routine.
+
+5. Added support for x86_64 systems.
+
+6. Add support for kernels located in /usr/src/kenrels (RedHat ES 4).
+
+7. Fixed multi-threading problem with xmit_buf on SST2/SST4 boards. This
+could lead to system panics where xmit_buf has been deallocated.
+
+8. Fix to write routine as a result of 2.6.10+ kernel changes.
+
+Changes in 4.07
+---------------
+
+1. Add support for linux 2.6 kernels.
+
+2. Add fix for SUSE 9.0 systems.
+
+3. Minor multithreading changes.
+
+Changes in 4.06
+---------------
+
+1. Several changes were made to fix build errors/warnings on IA64 systems.
+
+2. Fix for SST 4P/8P boards.  Hardware flow control was not working properly.
+
+3. Changes to comply with rpm version 4.2.
+
+Changes in 4.05
+---------------
+
+1. The multithreading within the device driver has been redone.  This should
+   reduce system overhead on multi-processor systems.  
+
+2. Fixed a system oops that could occur when null pointers are being
+   accessed while the device driver is being initialized.
+
+3. Modified the driver and utilities to use a common table that is used to
+   identify and characterize a board based on its id.
+
+4. The installation script and kernel makefiles would print a warning if
+   CONFIG_SMP is not configured in the kernel source to match running
+   kernel.  Since this warning was being ignored, it is now a fatal error.
+
+5. Fixed test for CONFIG_MODVERSIONS to ensure kernel source matches running
+   kernel.
+
+6. Emphasize during installation that a kernel build from the same kernel 
+   source used to build the driver is recommeded prior to installation.
+
+7. Changes made to comply with redhat 8.0 and rpm version 4.02.  These are
+   all build and install issues.
+
+8. Fixed an oops in megaparam that could occur while doing a port hangup.
+
+Changes in 4.04
+---------------
+
+1. Provide fix for oops condition caused by checking termios structure
+   for a port.  However, this was dependent on the tty structure being
+   present, which may not be the case.
+
+2. Add support for the SST-4P Universal Low Profile board.
+
+3. Fix warnings when building ssdiag.
+
+4. Remove bogus rev id check in ramp services, which would fail with next
+   generation SSP.
+
+Changes in 4.03
+---------------
+
+1. The RPM packaging was modified to conform to standard "good RPM practices".
+   As a result, the RPM is now distributed as a source RPM.  The installation
+   procedures have changed.  Refer to the install notes.
+
+2. The ISA Memory slot address was incorrectly set to 0xb0000, which meant
+   that ISA cards could only be used if 16K memory was unused and available
+   at this address.  The address will now be determined dynamically by the
+   driver in the range 640KB to 1MB.
+
+3. The driver routine to locate an available 16K ISA memory slot (between 640KB
+   and 1MB) was unreliable and would often report erroneously that no slots
+   were available.  This has been corrected.
+
+4. Provides a fix for ISA boards.  With the previous release, 4.01, the
+   majority of the ports would be initialized incorrectly and would
+   not operate correctly.
+
+5. Additional checks were put in for the "Atmel state work-around" that 
+   was implemented in release 4.01.  Additional register checks and lmx
+   product id consistency checks are done to validate that the board is
+   in a stable state before going "online".
+
+6. Provides a fix for MIM/CMX boards.  With the previous release, 4.01, these
+   board pairs would not go online.
+
+7. Removes a check in the open logic that disallows the use of standard
+   serial devices for RS422 ports.  The standard devices are all that is
+   available at this point and this test was useless anyway.
+
+8. Under certain conditions, output hardware flow control could be incorrectly
+   turned off.  This could happen if a port is opened, HW flow control is 
+   enabled and then the port is reopened.
+
+9. System validation and check is now done prior to the build/install on the
+   target system:
+	* kernel source must be installed (if not, exits with error)
+	* version.h + config.h must be present (if not, exits with error)
+	* kernel source version must match version of running kernel
+	  (if not, a warning is printed)
+	* SMP configuration from kernel source must match running kernel
+	  (if not, a warning is printed)
+	* MODVERSIONS configuration from kernel source must match running
+	  kernel (if not, a warning is printed)
+						        
+10. When the external power supply to a port module(s) is turned off and on, 
+    there may be a fluctuation of the Ring Clock On signal.  A "debounce"
+    functionality was added to the driver so that port modules are not enabled
+    until the fluctuation has terminated.  Otherwise, it is possible that port
+    registers could be in an invalid state resulting in input/output errors.
+
+11. The sstty commands to enable/disable hardware and software flow control
+    ("sstty [-+]rts" and "sstty [-+]ixon") did not always work and even if 
+    they did the termios flags were not modified to indicate the correct
+    state.  As a result, a subsequent stty would erroneously report the
+    state of "crtscts" and "ixon".
+
+12. The "quiet" option (-q and +q) was added to the sstty command.  When the
+    quiet option is enabled, ring configuration messages are suppressed (such
+    as the messages displayed when port modules are added or removed).
+
+13. The driver is installed in the appropriate place depending on Linux
+    kernel:
+	2.2 kernel: /lib/modules/<kernel version>/char/eqnx.o
+	2.4 kernel: /lib/modules/<kernel version>/kernel/drivers/char/eqnx.o

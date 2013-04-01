@@ -1,0 +1,710 @@
+#!/bin/sh
+# 
+# Equinox SST driver for Linux.
+#
+# Copyright (C) 1999-2007 Equinox Systems Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+# Equinox SST Loadable Module installation script
+
+#
+#	install / remove / get status from eqnx package
+#
+#	1) eqnx-cfg [-i] [-v][-o <parms>][-d <rpmdir>] <source RPM name>
+#		installs the eqnx product from <source RPM name>
+#	2) eqnx-cfg -U [-v][-o <parms>][-d <rpmdir>] <source RPM name>
+#		updates the eqnx product from <source RPM name>
+#	3) eqnx-cfg -r [-v][-o <parms>][-d <rpmdir>] 
+#		removes installed eqnx RPM and optionally all RPM
+#		components
+#	4) eqnx-cfg -s
+#		get status of eqnx RPM
+#
+#	-v 	: verbose option, additional inforamation is displayed
+#	-o <parms> : additional options/parameters to pass to rpm
+#	-d <RPM dir> : RPM directory (such as /usr/src/redhat)
+#
+#	NOTE: Environment variables KERNELSRC and KERNELOBJ override
+#	search for appropriate kernel source/object.
+
+#
+#
+# do_install name
+#	install eqnx from src RPM
+#
+do_install() {
+
+	echo "Equinox SST (eqnx) Installation (from source RPM)"
+
+	VTMP=/var/tmp
+	rm -f ${LOG}		   > /dev/null 2>&1
+	rm -rf ${VTMP}/eqnx-build > /dev/null 2>&1
+
+	#
+	# install the source RPM
+	#
+	echo " "
+	echo "1) validating build environment ..."
+
+	# Kernel Search Path
+	# These are all the places where kernel source might exist
+	KSP=none
+	if [ -e /usr/src/linux-`uname -r`/include/linux ]
+	then
+		KSP=/usr/src/linux-`uname -r`
+	elif [ -e /usr/src/kernels/`uname -r`/include/linux ]
+	then
+		KSP=/usr/src/kernels/`uname -r`
+	elif [ -e /lib/modules/`uname -r`/build/include/linux ]
+	then
+		KOBJ=/lib/modules/`uname -r`/build
+		if [ -e /lib/modules/`uname -r`/source/include/linux ]
+		then
+			KSP=/lib/modules/`uname -r`/source
+		else	KSP=${KOBJ}
+		fi	
+	elif [ -e /usr/src/kernels/linux-`uname -r`/include/linux ]
+	then
+		KSP=/usr/src/kernels/linux-`uname -r`
+	elif [ -e /usr/src/linux-`uname -r`-`uname -m`/include/linux ]
+	then
+		KSP=/usr/src/linux-`uname -r`-`uname -m`
+	elif [ -e /usr/src/kernels/`uname -r`-`uname -m`/include/linux ]
+	then
+		KSP=/usr/src/kernels/`uname -r`-`uname -m`
+	elif [ -e /usr/src/kernels/`uname -r | sed 's/smp/-smp/'`-`uname -m`/include/linux ]
+	then
+		KSP=/usr/src/kernels/`uname -r | sed 's/smp/-smp/'`-`uname -m`
+        elif [ -e /usr/src/linux-`uname -r | sed 's/-.*//'`/include/linux ]
+	then
+        	KSP=/usr/src/linux-`uname -r | sed 's/-.*//'`
+        elif [ -e /usr/src/kernels/`uname -r | sed 's/-.*//'`/include/linux ]
+	then
+        	KSP=/usr/src/kernels/`uname -r | sed 's/-.*//'`
+        elif [ -e /usr/src/linux-`uname -r | sed 's/\([0-9]*\.[0-9]*\)\..*/\1/'`/include/linux ]
+	then
+        	KSP=/usr/src/linux-`uname -r | sed 's/\([0-9]*\.[0-9]*\)\..*/\1/'`
+        elif [ -e /usr/src/kernels/`uname -r | sed 's/\([0-9]*\.[0-9]*\)\..*/\1/'`/include/linux ]
+	then
+        	KSP=/usr/src/kernels/`uname -r | sed 's/\([0-9]*\.[0-9]*\)\..*/\1/'`
+	elif [ -e /usr/src/linux-`uname -r | sed 's/custom//'`/include/linux ]
+	then
+		KSP=/usr/src/linux-`uname -r | sed 's/custom//'`
+	elif [ -e /usr/src/kernels/`uname -r | sed 's/custom//'`/include/linux ]
+	then
+		KSP=/usr/src/kernels/`uname -r | sed 's/custom//'`
+	elif [ -e /usr/src/linux/include/linux ]
+	then
+		KSP=/usr/src/linux
+	elif [ -e /usr/src/kernels/linux/include/linux ]
+	then
+		KSP=/usr/src/kernels/linux
+	fi
+
+	#
+	# KERNELSRC, if set, overrides KSP
+	#
+	KSP=${KERNELSRC:-$KSP}	
+
+	#
+	# KOBJ, if not specified, is the same as KSP
+	# KERNELOBJ, if set, overrides KOBJ
+	# KERNELSRC, if set, and not KERNELOBJ, overrides KOBJ
+	#
+	KOBJ=${KOBJ:-$KSP}
+	KOBJ=${KERNELSRC:-$KOBJ}
+	KOBJ=${KERNELOBJ:-$KOBJ}	
+
+	if [ ${KSP} = none ]
+	then
+		echo "The Linux kernel source could not be found."
+		echo "Please install the kernel source before proceeding."
+		exit 1
+	fi
+
+	echo ""
+	echo "NOTE: To reduce the possibility of install or operational errors,"
+	echo "please build and install a kernel from the kernel source"
+	echo "(${KSP}) prior to installing Equinox SST driver."
+	echo ""
+
+	if [ ${VERBOSE} -eq 1 ]
+	then
+		echo "     Linux kernel source = ${KSP}"
+		if [ ${KSP} != ${KOBJ} ]
+		then
+			echo "     Linux kernel object = ${KOBJ}"
+		fi
+	fi
+	KINC=${KSP}/include
+	KINC2=${KOBJ}/include
+   
+	# Locate version.h, config.h, utsrelease.h and autoconf.h files
+	if [ -f ${KINC}/linux/version.h ]
+	then
+		VERSFILE=${KINC}/linux/version.h
+	else	VERSFILE=${KINC2}/linux/version.h
+	fi
+	if [ -f ${KINC}/linux/config.h ]
+	then
+		CONFFILE=${KINC}/linux/config.h
+	else	CONFFILE=${KINC2}/linux/config.h
+	fi
+	if [ -f ${KINC}/linux/utsrelease.h ]
+	then
+		UTSRELEASEFILE=${KINC}/linux/utsrelease.h
+	elif [ -f ${KINC2}/generated/utsrelease.h ]
+	then
+		UTSRELEASEFILE=${KINC2}/generated/utsrelease.h
+	else	UTSRELEASEFILE=${KINC2}/linux/utsrelease.h
+	fi
+	if [ -f ${KINC}/linux/autoconf.h ]
+	then
+		AUTOCONFFILE=${KINC}/linux/autoconf.h
+	elif [ -f ${KINC2}/generated/autoconf.h ]
+	then
+		AUTOCONFFILE=${KINC2}/generated/autoconf.h
+	else	AUTOCONFFILE=${KINC2}/linux/autoconf.h
+	fi
+
+	if [ ! -f ${UTSRELEASEFILE} ]
+	then
+		UTSRELEASEFILE=${VERSFILE}
+	fi
+     
+	if [ ! -f ${UTSRELEASEFILE} ]
+	then
+		echo "WARNING: could not find ${UTSRELEASEFILE}."
+		echo "This may cause the eqnx driver to not build correctly."
+	fi
+
+	if [ ! -f ${CONFFILE} ]
+	then
+		CONFFILE=${AUTOCONFFILE}
+	fi
+	
+	if [ ! -f ${CONFFILE} ]
+	then
+		echo "WARNING: could not find ${CONFFILE} or ${AUTOCONFFILE}."
+		echo "This may cause the eqnx driver to not build correctly."
+	fi
+
+	# get the kernel version 
+	KVER=`cc -D__KERNEL__ -E -dM -I ${KINC} -I ${KINC2} ${UTSRELEASEFILE} | grep UTS_RELEASE | \
+	awk '{ print $3 }' | sed 's/\"//g'`
+
+	KVER2=`uname -r`
+
+	if [ ${KVER} != ${KVER2} ]
+	then
+		echo "WARNING: kernel source version, ${KVER}"
+		echo "does not match running kernel, ${KVER2}"
+		echo "Its likely that the eqnx driver will not build successfully."
+	fi
+
+	if [ $VERBOSE -eq 1 ]
+	then
+		echo "     Linux kernel version = ${KVER}"
+	fi
+
+	# run cloneconfig (suse) if available
+	if [ -e /proc/config.gz ]
+	then
+		echo ""
+		echo "NOTE: It is recommended that cloneconfig is run on the kernel source."
+		echo "This will ensure that the kernel source is configured the same"
+		echo "as the running kernel."
+		echo ""
+
+		echo -e "Do you want to run cloneconfig on the kernel source (recommended). (Y/n) ? \c"
+		read ans <&1
+		case $ans in
+		n*|N*)
+			;;
+		*)
+			HERE=`pwd`
+			cd ${KSP}
+			make cloneconfig > /dev/null 2>&1
+			cd ${HERE}
+			;;
+		esac
+	fi
+
+	# Figure out if kernel is 2.6+
+	KVER=`uname -r | cut -b1-3`
+	if [ ${KVER} = '2.6' ]
+	then
+		K26=1
+	else	K26=0
+	fi
+	
+	if [ ${K26} = 1 ]
+	then
+	echo ""
+	echo "NOTE: For linux 2.6 kernels, it is absolutely essential"
+        echo "that the kernel source has been fully configured and built"
+        echo "prior to installing Equinox SST driver."
+        echo ""
+	# RPMPARMS2="--nocontexts"
+	fi
+
+	# check the SMP flag - first from config.h
+	SMP=`cc -D__KERNEL__ -E -dM -I ${KINC} -I ${KINC2} ${CONFFILE} | \
+	grep 'CONFIG_SMP ' | awk '{ print $3 }'`
+	if [ ${SMP} ]
+	then
+		SMP=1
+	else	SMP=0
+	fi
+			        
+	# check that running kernel matches SMP configuration
+	uname -a | grep -q SMP > /dev/null 2>&1
+	if [ $? = 0 ]
+	then
+		SMP2=1
+	else	SMP2=0
+	fi
+
+	if [ ${SMP} -ne ${SMP2} ]
+	then
+		echo ""
+		if [ ${SMP} -eq 1 ]
+		then
+			echo "ERROR: kernel source configuration (smp)"
+			echo "does not match running kernel (uniprocessor)."
+		else
+			echo "ERROR: kernel source configuration (uniprocessor)"
+			echo "does not match running kernel (smp)."
+		fi
+		echo "This must be corrected before the Equinox SST driver"
+		echo "can be correctly used.  Check configuration of"
+		echo "CONFIG_SMP in kernel source."
+		exit 1
+	fi
+		   
+	if [ ${VERBOSE} -eq 1 ]
+	then
+		if [ ${SMP} -eq 1 ]
+		then
+			echo "     Linux SMP configuration: smp"
+		else	echo "     Linux SMP configuration: uniprocessor"
+		fi
+	fi
+		  
+	# check MODVERSIONS configuration from running kernel
+	if [ ${K26} = 0 ]
+	then
+		MODV=`cat /proc/ksyms | grep n_tty_ioctl | cut -d" " -f2`
+		if [ ${MODV} != n_tty_ioctl ]
+		then
+			MODV=1
+		else	MODV=0
+		fi
+	fi
+
+	# check the MODVERSIONS flag from config.h
+	MODV2=`cc -D__KERNEL__ -E -dM -I ${KINC} -I ${KINC2} ${CONFFILE} | \
+	grep CONFIG_MODVERSIONS | awk '{ print $3 }'`
+	if [ ${MODV2} ]
+	then
+		MODV2=1
+	else	MODV2=0
+	fi
+			        
+	# check that MODVERSIONS configuration matches
+	if [ ${K26} = 0 ]
+	then
+	if [ ${MODV} -ne ${MODV2} ]
+	then
+		if [ ${MODV} -eq 1 ]
+		then
+			echo "WARNING: module versions configuration (MODVERSIONS) mismatch between"
+			echo "running kernel [enabled] and kernel source [disabled]."
+			echo "Its likely that the eqnx driver will not build successfully."
+		else
+			echo "WARNING: module versions configuration (MODVERSIONS) mismatch between"
+ 
+			echo "running kernel [disabled] and kernel source [enabled]."
+			echo "Its likely that the eqnx driver will not build successfully."
+		fi
+	fi
+		   
+	if [ ${VERBOSE} -eq 1 ]
+	then
+		if [ ${MODV} -eq 1 ]
+		then
+			echo "     Linux module versions: enabled"
+		else	echo "     Linux module versions: disabled"
+		fi
+	fi
+	fi
+
+	#
+	# validate that the source RPM exists and has proper format
+	#
+	if [ -z ${SRC} ]
+	then
+		SRC="./eqnx-[0-9]*.src.rpm"
+		if [ ! -f ${SRC} ]
+		then
+			echo "Source RPM package not specified and none found in current directory."
+			exit 1
+		fi
+	fi
+
+	if [ ! -f ${SRC} ]
+	then
+		echo "Source RPM ${SRC} does not exist."
+		exit 1
+	fi
+
+	#
+	# obtain the binary RPM name
+	#
+#	BASE=`rpm -qp ${SRC} 2>&1`
+	BASE=eqnx-4.12d-1
+	if [ $? -ne 0 ]
+	then
+		echo "rpm -qp on ${SRC} failed: ${BASE}"
+		exit 1
+	fi
+
+	#
+	# install the source RPM
+	#
+	echo " "
+	echo "2) installing source RPM: ${BASE} ..."
+	if [ ${VERBOSE} -eq 1 ]
+	then
+		echo "     Base RPM name = ${BASE}"
+	fi
+
+	rpm -ivv ${RPMPARMS} ${RPMPARMS2} ${SRC} > ${LOG} 2>&1
+	if [ $? -ne 0 ]
+	then
+		echo "rpm failed on installation of source RPM: ${SRC}"
+		echo "please examine log file at ${LOG}"
+		exit 1
+	fi
+
+	#
+	# get ARCH directory
+	#
+	ARCH=`rpm --showrc | grep "^build arch" | awk '{print $4}'`
+	BIN=${BASE}.${ARCH}.rpm   
+
+	if [ ${VERBOSE} -eq 1 ]
+	then
+		echo "     ARCH = ${ARCH}"
+		echo "     Binary RPM name = ${BIN}"
+	fi
+
+	RPMSDIR=${RPMDIR}/RPMS/${ARCH}
+		
+	if [ ${VERBOSE} -eq 1 ]
+	then
+		echo "     RPM SPECS dir = ${SPECDIR}"
+		echo "     RPM RPMS dir = ${RPMSDIR}"
+	fi
+
+	#
+	# build the binary RPM
+	#
+	echo " "
+	echo "3) building binary RPM: ${BIN} (please wait) ..."
+#	typeset -i RPMVERSION
+#	RPMVERSION=`rpmvar _package_version`
+#	if [ $? -eq 0 -a $RPMVERSION -ge 30000 ] ; then
+		RPMB=rpmbuild
+#	else	RPMB=rpm
+#	fi
+	$RPMB -bb ${RPMPARMS} ${SPECDIR}/eqnx.spec >> ${LOG} 2>&1
+	if [ $? -ne 0 ]
+	then
+		echo "rpm failed on build of binary RPM: ${BIN}"
+		echo "please examine log file at ${LOG}"
+		exit 1
+	fi
+
+	#
+	# install the binary RPM
+	#
+	echo " "
+	echo "4) installing binary RPM: ${BIN} ..."
+	if [ $UPDATE -ne 0 ]
+	then
+		rpm -Uv ${RPMPARMS} ${RPMPARMS2} ${RPMSDIR}/${BIN} >> ${LOG} 2>&1
+	else
+		rpm -iv ${RPMPARMS} ${RPMPARMS2} ${RPMSDIR}/${BIN} >> ${LOG} 2>&1
+	fi
+	if [ $? -ne 0 ]
+	then
+		echo "rpm failed on installation of binary RPM: ${BIN}"
+		echo "please examine log file at ${LOG}"
+		exit 1
+	fi
+
+	#
+	# install driver initialization script at boot time
+	#
+	echo " "
+	echo "5) make driver initialized + loaded at boot time ..."
+	if [ ${VERBOSE} -eq 1 ]
+	then
+		/usr/sbin/eqnx-installrc -v
+	else
+		/usr/sbin/eqnx-installrc
+	fi
+
+	#
+	# load driver and create device files
+	#
+	echo " "
+	echo "6) loading device driver and initializing device files ..."
+
+	if [ $UPDATE -ne 0 ]
+	then 
+		/usr/sbin/rc.eqnx stop >> ${LOG} 2>&1
+		if [ $? -ne 0 ]
+		then
+			echo "device driver unload failed"
+			echo "please examine log file at ${LOG}"
+			exit 1
+		fi
+	fi
+
+	/usr/sbin/rc.eqnx start >> ${LOG} 2>&1
+	if [ $? -ne 0 ]
+	then
+		echo "device driver load failed"
+		echo "please examine log file at ${LOG}"
+		exit 1
+	fi
+
+	echo " "
+	echo "installation complete. logfile is located at ${LOG}"
+}
+
+#
+# do_remove
+#	un-install eqnx package
+#
+do_remove() {
+
+	#
+	# locate the package version
+	#
+	VER=`rpm -q eqnx`
+	if [ $? -eq 0 ]
+	then
+		echo "un-installing ${VER}"
+		rpm -ev ${RPMPARMS} eqnx
+		if [ $? -ne 0 ]
+		then
+			echo "RPM removal of eqnx failed"
+			exit 1
+		fi
+	fi
+
+	#
+	# remove build directory
+	#
+	VTMP=/var/tmp
+	rm -rf ${VTMP}/eqnx-build
+
+	#
+	# remove packages
+	#
+	echo -n "do you also wish to remove eqnx packages/data from rpm directory ? (y/n) "
+	read ans
+	echo " "
+	if [ ${ans} = y -o ${ans} = Y ]
+	then
+
+		ARCH=`rpm --showrc | grep "^build arch" | awk '{print $4}'`
+
+		if [ ${VERBOSE} -eq 1 ]
+		then
+			echo "     ARCH = ${ARCH}"
+		fi
+		
+		BUILDDIR=${RPMDIR}/BUILD
+		RPMSDIR=${RPMDIR}/RPMS/${ARCH}
+		SRCDIR=${RPMDIR}/SOURCES
+		SPECDIR=${RPMDIR}/SPECS
+		SRPMDIR=${RPMDIR}/SRPMS
+		BUILDRDIR=${RPMDIR}/BUILDROOT
+
+		if [ -d ${RPMSDIR} -a -d ${SRPMDIR} ]
+		then
+			if [ ${VERBOSE} -eq 1 ]
+			then
+				echo "     cleaning RPM directory ${RPMDIR}"
+			fi
+				
+			rm -rf ${BUILDDIR}/eqnx* > /dev/null 2>&1
+			rm -rf ${RPMSDIR}/eqnx* > /dev/null 2>&1
+			rm -rf ${SRCDIR}/eqnx* > /dev/null 2>&1
+			rm -rf ${SPECDIR}/eqnx* > /dev/null 2>&1
+			rm -rf ${SRPMDIR}/eqnx* > /dev/null 2>&1
+		fi
+		if [ -d ${BUILDRDIR} ]
+		then
+			rm -rf ${BUILDRDIR}/espx* > /dev/null 2>&1
+		fi
+	fi	
+}
+
+#
+# do_status
+#	status of eqnx package
+#
+do_status() {
+
+	#
+	# locate the package version
+	#
+	VER=`rpm -q eqnx`
+	if [ $? -eq 0 ]
+	then
+		echo "${VER} is installed"
+		/usr/sbin/rc.eqnx status
+	fi
+}
+
+#
+# help
+#	usage message
+#
+help() {
+	echo " "
+	echo "install:"
+	echo "eqnx-cfg [-i][-U][-v][-o rpm-options][-d rpm-directory][src-rpm]"
+	echo "   -i : install option (default)"
+	echo "   -U : upgrade existing eqnx product"
+	echo "   -v : verbose option"
+	echo "   -o : used to specify additional parameters to rpm"
+	echo "   -d : specifies rpm topdir directory"
+	echo "   src-rpm : source rpm to install, else found in current dir"
+	echo " "
+	echo "remove:"
+	echo "eqnx-cfg -r [-v]"
+	echo "   -v : verbose option"
+	echo " "
+	echo "status:"
+	echo "eqnx-cfg -s"
+	echo " "
+	exit 1
+}
+
+#######################################################################
+#	main
+
+
+#
+# get the options
+#
+INSTALL=0;
+UPDATE=0;
+REMOVE=0;
+STATUS=0;
+VERBOSE=0;
+RPMPARMS=
+RPMPARMS2=
+RPMDIR=
+LOG=/var/tmp/eqnx-log
+
+OPT=`getopt Ud:hio:rsv $*`
+if [ $? -ne 0 ] ; then
+	help
+fi
+set -- $OPT
+
+for i in $*
+do
+	case $i in
+	-U) UPDATE=1;
+	    INSTALL=1;
+	    shift ;;
+	-d) RPMDIR="$2"
+	    shift ; shift;;
+	-h) help
+	    shift ;;
+	-i) INSTALL=1;
+	    shift ;;
+	-o) RPMPARMS="$2";
+	    shift ; shift;;
+	-r) REMOVE=1;
+	    shift ;;
+	-s) STATUS=1;
+	    shift ;;
+	-v) VERBOSE=1;
+	    shift ;;
+	--) shift ; break;;
+	esac
+done
+
+export PATH=$PATH:.
+
+#
+# locate the RPM topdir directory
+#
+if [ -z ${RPMDIR} ] 
+then
+	PATH=$PATH:/usr/sbin:.
+	export PATH
+#	RPMDIR=`rpmvar _topdir`
+	RPMDIR=`rpm --eval '%{_topdir}'`	
+	if [ $? -ne 0 ]
+	then
+		echo "could not locate RPM directory, please use -d <RPM topdir_directory.>"
+		exit 1
+	fi
+fi
+SPECDIR=${RPMDIR}/SPECS
+
+if [ ! -d ${SPECDIR} ]
+then
+	echo "$RPMDIR is not valid RPM directory, but continuing";
+//	exit 1
+fi
+
+if [ ${REMOVE} -eq 0 -a ${STATUS} -eq 0 ]
+then
+	INSTALL=1
+fi
+
+SRC="$1"
+
+if [ ${INSTALL} -eq 1 ] 
+then
+	do_install $SRC $UPDATE
+	exit 0
+fi
+
+if [ ${REMOVE} -eq 1 ] 
+then
+	do_remove 
+	exit 0
+fi
+
+if [ ${STATUS} -eq 1 ] 
+then
+	do_status
+	exit 0
+fi
+
+exit 0

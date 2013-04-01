@@ -1,0 +1,84 @@
+#!/bin/sh
+# 
+# Equinox SST driver for Linux.
+#
+# Copyright (C) 1999-2007 Equinox Systems Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+#
+
+PATH=/bin:/sbin:/usr/bin
+CLEANUP=0
+QUIET=0
+usage() 
+{
+	echo "ssrm: usage"
+	echo " "
+	echo "ssrm    :		Unloads the Equinox driver"
+	echo "ssrm -C :		Unloads the Equinox driver, cleans up /dev/ttyQ* "
+	echo "			 entries and /etc/eqnx database."
+	echo "     -q :	        quiet mode."
+      	exit 1
+}
+if [ $# -ge 1 ]
+then
+	while getopts "Cq" ch ; do
+  	case $ch in
+    		C)  CLEANUP=1;;
+		q)  QUIET=1;;
+    		\?)
+			usage;;
+  	esac 
+	done
+elif [ $# -gt 2 ]
+then
+	usage
+fi
+DATABASE=/etc/eqnx
+EQUINOX_MODULE=eqnx
+
+eqnx_driver=`grep eqnx /proc/modules | awk '{print $1}'`
+if test -z "$eqnx_driver"; then
+	if [ $QUIET = 0 ] ; then
+		echo "The Equinox SST driver is not loaded!"
+	fi
+else
+	if /sbin/rmmod $EQUINOX_MODULE; then :; else
+		exit $?
+	fi
+	if [ $QUIET = 0 ] ; then
+		echo " "
+		echo "Equinox SST driver unloaded"
+	fi
+fi
+
+if [ $CLEANUP = 1 ]
+then
+	if [ $QUIET = 0 ] ; then
+		echo "Cleaning up the /dev/ttyQ* and /dev/eqn* entries!"
+	fi
+	rm -rf /dev/ttyQ[0-9][a-h]*
+	rm -rf /dev/eqn*
+
+	if [ $QUIET = 0 ] ; then
+		echo "Cleaning up the Equinox database $DATABASE!"
+	fi
+	rm -f /etc/eqnx/database
+	rm -f /etc/eqnx/logfile
+	rmdir /etc/eqnx > /dev/null 2>&1
+fi
+
+exit 0

@@ -1,0 +1,681 @@
+EQUINOX Super Serial Technology Installation Notes
+-------------------------------------------------- 
+
+This is a loadable Linux driver for the SST based multiport serial boards. The
+driver is available for Intel ix86, Intel IA-64 platforms and x86_64 platforms
+(AMD64 and Intel EM64T).  It supports the ISA, EISA and PCI versions of
+the two, four, eight and 16 port boards, the expandable 64 and 128 port boards,
+and the 4RJ and 8RJ boards.
+ISA and EISA are not available on IA-64 (Itanium) and x86_64 systems.
+
+Installation
+------------
+
+The Equinox Super Serial Technology (SST) software is distributed as a
+standard source RPM.  
+  
+There are several steps required to do the full installation from the
+source RPM.  These can be done automatically by using the installation 
+script eqnx-cfg or by manually performing each step.  The directions for 
+both procedures are described below.
+
+It is generally recommended that automatic installation using eqnx-cfg be
+used.  
+
+Automatic Installation Using eqnx-cfg
+-------------------------------------
+
+The eqnx-cfg script will perform all of the steps necessary to install the
+Equinox SST eqnx product.  Plus it will also validate the target environment
+which would indicate potential problems when building the driver.
+
+NOTE: this is the recommended procedure to install the eqnx product.
+
+From a terminal (console) window, do the following:
+
+	1. Optionally, remove existing RPM package, if installed:
+	   (an existing RPM may also be upgraded by using the -U option
+	   to eqnx-cfg as mentioned in step #4).
+	   rpm -ev eqnx -or- eqnx-cfg -vr
+
+	2. Obtain and locate the product release.  This may be 
+	   obtained via ftp from the Equinox web-site (www.equinox.com), 
+	   by floppy disk or cd-rom.
+
+	   For floppy disk or cd-rom, mount the distribution media and cd
+	   to the correct directory:
+
+	   for floppy disk:
+	   a. mount -t ext2 /dev/fd0 /mnt/floppy
+	   b. cd /mnt/floppy
+
+	   for cd-rom:
+	   a. mount -t iso9660 /dev/cdrom /mnt/cdrom
+	   b. cd /mnt/cdrom/TARS/LINUX
+
+	   NOTE: device name and mount points may vary between systems.
+
+	3. Un-tar the image.
+
+ 	   mkdir /tmp/eqnx
+	   cp eqnx-4.12d.tar /tmp/eqnx
+	   cd /tmp/eqnx
+	   tar -xvf eqnx-4.12d.tar
+		
+	4. Install the eqnx product using eqnx-cfg:
+
+	   The simple procedure to install using eqnx-cfg:
+	   ./eqnx-cfg
+
+	   The script will also take options and parameters as follows:
+	   ./eqnx-cfg [-U] [-v] [-o parms] [-d rpmdir] [eqnx-4.12d-1.src.rpm]
+
+	   The -U (upgrade) option will upgrade an existing eqnx product.
+
+	   The -v (verbose) option provides additional information during
+	   the installation.
+
+	   The -o (other parms) option is used to provide additional parameters
+	   to the rpm command.  
+
+	NOTE 1: On systems such as Debian, Slackware and Gentoo, the rpm
+	operation will fail due to dependency problems.  On these systems,
+	the "-o --nodeps" option should be used.
+
+	   The -d (RPM directory) is used to specify the toplevel RPM
+	   directory, such as /usr/src/redhat.  Generally this option 
+	   will not be required, this value will be determined automatically.
+
+	   The source RPM may be specified, otherwise it will attempt to
+	   locate and use a source RPM within the current directory.
+
+	5. The eqnx-cfg creates a log file, /var/tmp/eqnx-log.  If the
+	   installation fails, please read the log file.
+
+	6. If a distribution media was mounted, unmount it:
+
+	   cd /
+	   umount <mount directory>	(/mnt/floppy, /mnt/cdrom, etc.)
+
+	NOTE 2: The installation will attempt to modify the system scripts
+	so that the driver will be automatically loaded at boot time.  If
+	this cannot be done automatically, the operator must manually make 
+	the change to ensure that the /usr/sbin/rc.espx script is invoked
+	at boot time.  
+
+	"/usr/sbin/rc.eqnx start" will load the driver and start operation.
+	"/usr/sbin/rc.eqnx stop" will terminate esp operations.
+
+Manual Installation
+-------------------
+
+From a terminal (console) window:
+
+	1. Obtain and locate the release package.  This may be obtained via ftp
+	   from the Equinox web-site (www.equinox.com), by floppy disk or
+	   cd-rom.
+
+	   For floppy disk or cd-rom, mount the distribution media and cd
+	   to the correct directory:
+
+	   for floppy disk:
+	   a. mount -t ext2 /dev/fd0 /mnt/floppy
+	   b. cd /mnt/floppy
+
+	   for cd-rom:
+	   a. mount -t iso9660 /dev/cdrom /mnt/cdrom
+	   b. cd /mnt/cdrom/TARS/LINUX
+
+	   NOTE: device name and mount points may vary between systems.
+
+	3. Un-tar the image.
+
+ 	   mkdir /tmp/eqnx
+	   cp eqnx-4.12d.tar /tmp/eqnx
+	   cd /tmp/eqnx
+	   tar -xvf eqnx-4.12d.tar
+		
+	4. Install the source rpm:
+
+	   rpm -ivh eqnx-4.12d-1.src.rpm
+
+	5. Build the binary rpm:
+
+	   rpmbuild -bb <rpm directory>/SPECS/eqnx.spec
+	   
+	NOTE 3: For systems with rpm utilities prior to version 4.0,
+		"rpm -bb" should be used instead of rpmbuild.
+	NOTE 4: The location of the RPM directories may vary between systems.
+		Typical locations are listed at the end of this section.
+
+	6. Install the binary rpm:
+
+	   rpm -ivh <rpm directory>/RPMS/{arch}/eqnx-4.12d-1.{arch}.rpm
+
+	NOTE 5: the 'arch' value will vary based on distributions.
+	NOTE 6: an upgrade of an existing RPM can be done by using the
+		upgrade, -U option to the rpm instead of the -i option.
+
+	7. Load driver and create device files:
+
+	   /usr/sbin/rc.eqnx start
+
+	NOTE 7: if an upgrade was done and the previous product was
+		older than 4.03, then the "restart" option must be used
+		instead of "start".
+
+	8. Make the driver loaded and initialized at boot time:
+
+	   This varies based on distribution:
+	   a. [for systems with chkconfig (Redhat, Mandrake, TurboLinux, etc)]
+	      chkconfig --add eqnx
+	   b. [for systems with /etc/rc.d/rcN.d directories (Suse, 
+	       Caldera, etc)]
+	      cp /usr/sbin/rc.eqnx /etc/rc.d/eqnx
+	      ln -s /etc/rc.d/eqnx /etc/rc.d/rcN.d/S90eqnx
+	      (where N=2,3,4,5)
+	   c. [for systems with /etc/rcN.d directories (Debian, etc)]
+	      cp /usr/sbin/rc.eqnx /etc/init.d/eqnx/S90eqnx
+	      ln -s /etc/init.d/eqnx /etc/rcN.d
+	      (where N=2,3,4,5)
+	   d. [for systems with /etc/rc.d/rc.local (Slackware, etc)]
+	      add "/usr/sbin/rc.eqnx start" to /etc/rc.d/rc.local.
+	   e. [for Gentoo]
+	      manual set-up is required.  Refer to NOTE 2.
+
+	   Alternatively, the script /usr/sbin/eqnx-installrc will attempt
+	   to install the eqnx startup script appropriately based on
+	   distribution.
+	      
+	9. If a distribution media was mounted, unmount it:
+
+	   cd /
+	   umount <mount directory>	(/mnt/floppy, /mnt/cdrom, etc.)
+
+	Typical RPM directories:
+	Redhat		/usr/src/redhat
+	Mandrake	/usr/src/RPM
+	Suse		/usr/src/packages
+	Debian		/usr/src/redhat
+	TurboLinux	/usr/src/turbo
+	Slackware	/usr/src/rpm
+	Gentoo		/usr/src/redhat
+
+KERNELSRC and KERNELOBJ Override
+--------------------------------
+
+Regardless of whether a manual installation or an automatic installation, 
+using eqnx-cfg, is being done - the build scripts will attempt to locate and
+use the kernel source that corresponds to the running kernel.
+
+In some cases, the kernel source path chosen may be incorrect.  There are
+environment variables that may be used to specify the kernel source location.
+	KERNELSRC = location of kernel source.
+	KERNELOBJ = location of kernel object, if different from KERNELSRC.
+
+Installation Components
+-----------------------
+
+As a result of standard RPM installation, the following will be installed:
+
+	* eqnx driver source			/var/tmp/eqnx-build/src/drv
+	* eqnx diagnostic utilities source	/var/tmp/eqnx-build/src/utils
+	  (ssmkn, ssrm, ssdiag and sstty)
+	* diagnostic utilities 			/usr/bin
+	  (ssmkn, ssrm, ssdiag and sstty)
+	* install script, eqnx-cfg		/usr/sbin
+	* configuration information		/etc/eqnx
+	* startup script			/usr/sbin/rc.eqnx
+
+The eqnx driver and utilities will be built and installed during
+the installation of the binary RPM package.
+
+Kernel Rebuild
+--------------
+
+The driver will be built using the include files for the current kernel.
+As a result, the correct source must be installed on the system or the
+build will fail.  In addition, the kernel source must be configured to
+match the current kernel (particularly, CONFIG_SMP and CONFIG_MODVERSIONS).
+
+NOTICE:
+In order to reduce the probability of installation or operational problems
+it is HIGHLY RECOMMENDED that the following procedure be followed:
+
+	1. Install appropriate kernel source.
+	2. Configure the kernel as required.
+	3. Re-build the entire kernel (and modules).
+	4. Install and re-boot using the new kernel.
+	5. If there are no problems, install the Equinox SST driver.
+
+The actual steps for configuring, building and installing a kernel will
+vary based on distribution.
+
+Removal
+-------
+
+The eqnx package can be un-installed using standard RPM tools (for
+example by "rpm -ev eqnx" at a command prompt).  This removes
+all components of the package and unloads the driver.
+
+The eqnx package can also be un-installed using eqnx-cfg -r.  This optionally
+will also remove the RPMs and data used to build the eqnx RPMs.
+
+The removal will fail if the driver cannot be unloaded.  This is almost
+always because the driver is being used by other processes.
+Typically, this would be getty or mgetty processes
+but it could be other processes as well.  These processes must be
+terminated before the removal can succeed.
+
+Upgrade
+-------
+
+An upgrade from an existing release can be done.  An upgrade will fail
+if the existing driver is in use.
+
+For manual installations, use the -U option when installing the binary
+RPM.  
+
+For installations using eqnx-cfg, the -U option should be specified when
+invoking eqnx-cfg.
+
+Dependencies
+------------
+
+The rpm package has a built-in dependencies on perl and ncurses.  For
+some distributions, ncurses-devel is also required.
+
+It is also a requirement that the rpm and rpm-devel packages are installed.
+
+SMP Systems
+-----------
+
+In order to properly run the SST driver on a symmetric multiprocessing 
+system (SMP), two patches must be applied to the standard Linux kernel
+in order to make the tty sub-system properly multi-threaded. 
+
+1. Prior to the linux 2.2.15 kernel, serial port data could get lost
+   if a port writer and a port reader were running concurrently on a
+   multiprocessor system.  The fixes are in the following kernel files
+   from the linux patchset #15:
+	/usr/src/linux/drivers/char/n_tty.c
+	/usr/src/linux/drivers/char/tty_io.c
+	/usr/src/linux/drivers/char/tty_ioctl.c
+	/usr/src/linux/drivers/net/ppp.c
+	/usr/include/linux/tty.h
+	/usr/include/linux/if_pppvar.h
+
+   This problem has been corrected in linux kernel releases 2.2.15 and
+   later and also in linux 2.4 kernels.
+
+2. Serial ports can get into a "hung" state if a port writer and a port
+   reader are running concurrently on a multiprocessor system and 
+   "canonical" mode processing is used.  This has been fixed in 2.4 
+   kernels.
+
+Driver Rebuilding
+-----------------
+
+Driver source is installed at /var/tmp/eqnx-build/src/drv.  This is used to 
+build a kernel module which can be dynamically loaded or unloaded from
+the running system.  The driver object will be installed at
+
+	2.2 kernels: /lib/modules/REL/char			
+	2.4 kernels: /lib/modules/REL/drivers/char
+	2.6 kernels: /lib/modules/REL/drivers/char
+
+	where
+		REL = Linux kernel version number
+
+During installation the driver will be rebuilt based on the system
+environment (kernel version number and SMP information).
+
+To manually rebuild the driver (must be running as root user):
+
+	1. cd /var/tmp/eqnx-build/src
+	2. cd drv
+	3. make clobber 
+	4. make install
+
+Note that rebuilding the kernel will NOT cause the eqnx driver to be
+automatically rebuilt and installed.
+
+Diagnostic Utilities
+--------------------
+
+The diagnostic utilities ssdiag, sstty and ssmkn are dependent on
+the system environment and are rebuilt automatically during installation.
+
+To manually rebuild these utilities:
+
+	1. cd /var/tmp/eqnx-build/src
+	2. cd utils
+	3. make clobber 
+	4. make install
+
+Number of SST boards
+--------------------
+
+The number of cards the driver can handle is set by the MAXBOARD 
+variable in the file linux.h (in the eqnx driver directory: 
+/var/tmp/eqnx-build/src/drv).  The default number is 4.
+
+By setting the MAXBOARD to the number of SST cards in the system, the driver 
+will only allocate the memory that is required and the major numbers
+will not be wasted.  After modifying this variable, the driver must be 
+rebuilt and installed as described in "Driver Rebuilding".
+
+IMPORTANT: Please note the MAXBOARD variable can be increased to a maximum of
+8 as the driver can only handle a maximum of 8 SST based cards in the system.
+
+	A set of 128 minor numbers are reserved for each card starting with 
+	zero. An example of a four card configuration would be,
+
+	card 1: SST-64P/64	(1 SSP64 ASIC)
+		device names with major and minor numbers,
+		/dev/ttyQ1a1	50 0
+		/dev/ttyQ1a2	50 1
+		.
+		.
+		.
+		.
+		/dev/ttyQ1d16	50 64
+
+	card 2: SST-64P/8	(1 SSP64 ASIC)
+		device names with major and minor numbers,
+		/dev/ttyQ2a1	50 128
+		.
+		.
+		.
+		.
+		/dev/ttyQ2a8	50 135
+
+	card 3: SST-4I/8	(2 SSP4 ASIC)
+		device names with major and minor numbers,
+		/dev/ttyQ3a1	51 0
+		/dev/ttyQ3a2	51 1
+		.
+		/dev/ttyQ3a4	51 4
+		.
+		.
+		/dev/ttyQ3a8	51 7
+
+	card 4: SST-64I/64	(2 SSP64 ASIC)
+		device names with major and minor numbers,
+		/dev/ttyQ4a1	51 128
+		.
+		.
+		.
+		.
+		/dev/ttyQ4h16	51 255
+
+Even though it is possible to create these devices using the mknod 
+command, The utility "ssmkn" can create these devices. It maintains a database 
+of the configuration and knows when the devices have been added or removed or 
+moved. 
+
+The utility "sstty" gives additional capabilities in terms of using 
+CTS/RTS flow control, switching DTR, moving board memory for ISA cards and 
+more information like board configuration, ISA memory holes, etc.
+
+ISA Boards and I/O Ports
+------------------------
+
+ISA boards must be assigned an I/O port address and a 16K ISA memory region.
+The ISA port address is assigned between 0x200 and 0x3f0.  The ISA memory
+region is a paged 16K slot in the range 640K to 1M.  The ISA cards do not use
+IRQs.
+
+There are three primary methods used to assign these resources.  In order of
+reliability, the methods are :
+
+	1) Configure I/O address using dip switch on board
+	2) Configure board for Plug-and-Play and enable PnP mode in BIOS
+	3) Configure board for Plug-and-Play and disable PnP mode in BIOS
+
+The following sections cover these methods.
+
+ISA Boards and Configured I/O addresses
+---------------------------------------
+
+NOTE: This is the recommended method of configuring the board.
+
+Each ISA board has a jumper and a 4-position dip switch.  Position the jumper
+so that "SWITCHES" is selected (not "PLUG & PLAY") and configure the dip
+switch to select an appropriate I/O port address.  For more information, 
+refer to the appropriate hardware reference manual.  The dip switches are 
+only used to select an I/O port address.
+
+The ISA memory location will be determined automatically or can be assigned
+to a specific address.  This is determined by the "MegAddr" address.  
+A value in this variable forces the driver to set ISA boards to use a 16K 
+memory window at this address.  Otherwise, the driver will try to find a
+memory hole automatically. If the board does not seem to work with the
+automatically generated address, the "MegAddr" variable can be set to 
+a usable 16K ISA hole.  Note that the default for "MegAddr" is 0, i.e.
+automatically find a memory hole.
+
+The value of "MegAddr" can be specified by modifying the file "linux.c"
+int the driver directory (/var/tmp/eqnx-build/src/drv).  The driver will
+then need to be re-built as described in "Driver Rebuilding".
+
+If the automatically generated address does not work properly, the sstty
+utility may be used to locate and test ISA memory holes.  "sstty -i" will
+list potential ISA holes and their availability.  "sstty -v" can be used
+to locate the board to a different ISA memory hole (the result can be found
+in the log file /var/log/messages).  Note that this is only temporary and
+will not be preserved across system reboots.  
+
+If the automatically generated address does not work properly and a
+usable ISA memory hole has been located, then the variable "MegAddr" in the
+linux.c file (under driver directory) should be set to this address.  
+
+ISA Boards and Plug and Play
+----------------------------
+
+To enable Plug-and-Play mode select "PLUG & PLAY" with the jumper.  In 
+Plug-and-Play mode, the dip switch is not used.  If the system BIOS supports
+it, the most reliable option is to enable Plug and Play mode in the BIOS
+(i.e. do not select PnP OS).
+
+ISA Boards and Plug and Play with the Linux Kernel
+--------------------------------------------------
+
+The last option is to select "PLUG & PLAY" mode on the board and have the
+Linux kernel perform the Plug-and-Play configuration.  
+
+The Linux kernel must be configured for Plug-and-Play.  In addition, the
+board configuration may need to be provided, i.e.
+
+Linux 2.2 kernels -
+	The isapnp tools must be configured to enable ISA SST board(s).
+	Generally, this is done as follows:
+
+		pnpdump -c > /etc/isapnp.conf
+		edit /etc/isapnp.conf
+		there will be an entry for each equinox PnP board -
+		  - the port line can generally be left alone.
+		  - the memory line is either a range (MODE wr) or a limit
+		    (MODE wu).
+		  - for 2I, 4I, 8I and 16I boards, uncomment the range line
+		    (MODE wr) and comment out the limit line (MODE wu).
+		  - for 64I and 128I boards, uncomment the limit line (MODE wu)
+		    and comment out the range line (MODE wr). 
+		    Note - this is the default.
+		reboot the system.
+
+Linux 2.4 kernels -
+	ISA plug and play is automatic.  Please note - 64I and 128I boards
+	do not work correctly with linux 2.4 kernels.
+
+If there is a problem with ISA Plug-and-Play with the Linux kernel, please
+use a different method for configuring your SST board.
+
+Initializing SST driver and device files
+----------------------------------------
+
+During system startup, several operations must be done before a SST
+can be accessed:
+
+	* the driver module must be loaded.
+	* device files must be created.
+
+The script to do these operations is in /etc/rc.d/init.d/eqnx.
+This script is automatically invoked to initialize or terminate the driver
+while booting or changing init states.
+
+The script can also be invoked manually for various operations as described
+below:
+
+	/etc/rc.d/init.d/eqnx start	(initialize driver + device files)
+
+	/etc/rc.d/init.d/eqnx stop	(terminate driver, rm device files)
+
+	/etc/rc.d/init.d/eqnx restart	(equivalent to stop followed by start)
+
+	/etc/rc.d/init.d/eqnx status	(status of driver, number of active ports)
+
+Device Files
+------------
+
+The device files provided for SST devices have:
+	* names of the form /dev/ttyQN
+
+	where N represents the portname extension of the form 
+	<adapter card><module><port>.
+
+	<adapter card> is a single number between 1 and 8. The adapter card 
+	numbers are assigned in slot order or IO address sequence according to
+	the type of card.(ISA/PCI/EISA)
+
+	<module> is a single letter from 'a' through 'h' representing the port
+	modules in the case of expandable cards. For the multiport cards, they
+	are always 'a'.
+
+	<port> is a decimal number between 1 and 16. It is the actual port 
+	number on the port module for the expandable boards or the fanout
+	cables for the 2, 4 or 8 port boards.
+
+	An example of a port name will be /dev/ttyQ2b14. Here "2" is the second 
+	equinox board, "b" is the second port module connected to the 
+	expandable board and "14" is actual port on the port module.
+
+The major number for the device files is dynamically chosen at run time.
+On a running system, the value selected can be obtained by displaying
+the /proc/devices file.
+
+Each major number can handle two SST cards with 128 ports each.
+The default is set to handle four SST based cards. 
+ 
+Terminal and Modem Setup
+------------------------
+
+Configuring SST ports to be used for terminals or modems is the same
+as for other standard serial ports.  Getty(1m) is used to initialize
+and control terminals and mgetty(8) is used for modems.  Normally, 
+initialization is done by adding a getty/mgetty entry for each port
+in the /etc/inittab file.  Each getty/mgetty line references a 
+gettydefs(5) entry which specifies the speed and tty settings that
+will be used.
+
+Please note: newer distributions of Linux (such as RedHat 7.2) have
+replaced getty with agetty.  Refer to the appropriate manual page.
+
+Note that HUPCL must be specified in the gettydefs entry for a terminal
+or modem in order to have the port disconnected after the last process
+closes.
+
+For more information, refer to the system manual pages for getty (or agetty),
+mgetty and gettydefs.
+
+Printer Setup
+-------------
+
+Configuring SST ports to be used for printers is also the same as
+for other standard serial ports.  However, it should be noted that 
+the standard Linux tools generally do not do this well.
+
+The following provides a short setup guide for serial printers:
+
+1. Add the printer using the standard administration tool for your
+   Linux system (such as printtool).  
+
+   This adds a new printer entry to the file /etc/printcap.
+
+2. Edit the file /etc/printcap.
+
+3. For the new serial printer add a baudrate specification, using
+   the 'br' function, such as:
+   	:br#9600:\ 
+
+4. If necessary, specify parity and flow control for the serial printer.
+   Unfortunately, there are two different ways of doing this based on the
+   version of the line printer software installed.  To determine which
+   operations to use, it best to read the printcap(5) to see which
+   functions are provided on your system.
+
+   a. Older versions of lp services (such as provided by RedHat 6.2 and
+      earlier):
+
+      Flow control and parity settings are done by specifying a set of
+      termio bits to clear using the 'fc' function and a set of bits to
+      set using the 'fs' function.
+
+      No parity:
+   	:fc#0400:\
+
+      Even parity:
+   	:fs#0400:\
+	:fc#01000:\
+
+      Odd parity:
+   	:fs#01400:\
+
+      Hardware flow control (must be combined with parity commands):
+   	:fs#020000000000:\
+
+      An example entry in /etc/printcap (even parity, 19200):
+
+      lp:\
+	:sd=/var/spool/lpd/lp:\
+	:mx#0:\
+	:br#19200:\
+   	:fs#0400:\
+	:fc#01000:\
+	:sh:\
+	:lp=/dev/ttyQ01e0:\
+	:if=/var/spool/lpd/lp/filter:                                             
+
+   a. Newer versions of lp services (such as provided by RedHat 7.0 and
+      later):
+
+      Flow control and parity settings are done by specifying a set of
+      stty attributes:
+
+   	:stty parenb parodd ixon -crtscts:\
+
+	-or-
+
+	:stty -parenb ixon crtscts:\
+
+      Note that the 'fc' and 'fs' attributes must NOT be specified 
+      when using the newer version of the lp services. 
+
+For more information, refer to the system manual pages for printcap
+and the HOWTO guide for printers.
+
+Serial Programming Guides
+-------------------------
+
+The best source for information on how to use serial devices can be
+found in the Linux HOWTO documents.  These may be installed on the
+target system.  Typically, they are located at /usr/doc/HOWTO.
+They can also be found on the internet at the Linux Documentation Project
+website (http://metalab.unc.edu/mdw/index/html).
+
+Recommended HOWTOs would be:
+
+	* Serial-HOWTO
+	* Serial-Programming-HOWTO
+	* Modem-HOWTO
+

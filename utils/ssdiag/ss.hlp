@@ -1,0 +1,550 @@
+<Unix She>
+Run Shell:
+
+This selection runs the born shell( sh ) 
+command. It allows you to escape to the  
+shell to run system commands and quickly
+return to the diagnostics program.
+
+To return to the diagnostic program:
+Type exit <CR> at the command prompt  
+
+<Sysadm p>
+Run sysadm ports:
+
+This selection runs the system administration  
+command with ports as the first argument 
+( sysadm ports ). Use this option to view the status
+and configuration of port monitors and services.
+Upon exiting you are return to the megadiag program.
+
+
+<Counters>
+Receive and Transmit counts:
+
+This menu item allows you to monitor,
+in realtime the selected board's (or module ) 
+transmit and receive activity. The values displayed  
+are the accumulated totals since the system
+was booted.
+
+<Board St>
+Board Status:
+
+The Board status selection displays board 
+specific information. Use it to obtain board  
+types and resource requirements. The Address 
+column shows the physical address the driver  
+uses to access the board's dual port memory. 
+The Size column shows the size of memory window   
+used to access the board's dual port memory.
+The I/O column shows the I/O address which the 
+driver uses to detect and control the hardware.  
+
+<Driver S>
+Driver Status:
+
+This menu selections displays the device driver's
+current configuration. Use this selection to show  
+the device drivers version number and the number   
+of boards the driver is configured to manage.
+
+<Topology>
+Topology:
+
+This tool allows you view a real time graphical  
+representation of the physical configuration of 
+the board and modules connected.
+
+</dev/ter>
+Select Board
+
+This is a list of the boards found by the driver. This  
+list show the prefix of the device names associated
+with a board. Us the up and down arrow keys to move 
+through the list of boards. When you've highlighted the
+board you wish to see data on press enter.
+
+<Ports a1>
+Select Group
+
+This is a list of the groups you may choose from. This
+selection allows you to view data on the channels 1a1
+through 1a16 on a sixteen port pannel or 1a1 through    
+1a8 on an eight port pannel. 
+
+<Ports b1>
+Select Group
+
+This is a list of the groups you may choose from. This
+selection allows you to view data on the channels 1b1
+through 1b16 on a sixteen port pannel or 1b1 through    
+1b8 on an eight port pannel. 
+
+<Ports c1>
+Select Group
+
+This is a list of the groups you may choose from. This
+selection allows you to view data on the channels 1c1
+through 1c16 on a sixteen port pannel or 1c1 through    
+1c8 on an eight port pannel. 
+
+<Ports d1>
+Select Group
+
+This is a list of the groups you may choose from. This
+selection allows you to view data on the channels 1d1
+through 1d16 on a sixteen port pannel or 1d1 through    
+1d8 on an eight port pannel. 
+
+<Ports e1>
+Select Group
+
+This is a list of the groups you may choose from. This
+selection allows you to view data on the channels 1e1
+through 1e16 on a sixteen port pannel or 1e1 through    
+1e8 on an eight port pannel. 
+
+<Ports f1>
+Select Group
+
+This is a list of the groups you may choose from. This
+selection allows you to view data on the channels 1f1
+through 1f16 on a sixteen port pannel or 1f1 through    
+1f8 on an eight port pannel. 
+
+<Ports g1>
+Select Group
+
+This is a list of the groups you may choose from. This
+selection allows you to view data on the channels 1g1
+through 1g16 on a sixteen port pannel or 1g1 through    
+1g8 on an eight port pannel. 
+
+<Ports h1>
+Select Group
+
+This is a list of the groups you may choose from. This
+selection allows you to view data on the channels 1h1
+through 1h16 on a sixteen port pannel or 1h1 through    
+1h8 on an eight port pannel. 
+
+<Readme  >
+Show Readme:
+
+Select this item to page through the Readme instructions.  
+Upon completion you will be returned to the megadiag
+main menu.
+
+<sysadm p>
+
+Run the "sysadm ports"
+This item executes the SVR4 "sysadm" command with "ports" as
+the first argument. It allows you to run the sysadm command  
+without exiting the megadiag program. Upon completion you     
+will be returned to the megadiag main menu.
+
+< menu   >
+
+ Use UP and DOWN arrow keys to move      
+ the cursor. Press Enter to make
+ a selection.
+
+< Configu>
+Configure Loopback Test:
+
+Pick this selection to configure various aspects of  
+the loopback test. You can configure such things as  
+speed, board or mux, data verification and the frequency  
+that the results are reported. 
+
+Defaults for the loopback test are: board or mux 1,
+38400 baud, verify data received and update every 6 
+seconds.
+<Termio  >
+Termio:
+
+This selection outputs the general terminal  
+interface data associated with SST devices.  
+It is similar the "stty" command in that it
+prints all enabled termio flags.
+<Loopback>
+Loopback test:
+
+This Item allows you to run a loopback test.  
+This utility requires that the selected port(s) have  
+transmit and receive pins tied together(in External 
+loopback mode). Also, the data transmitted consist of
+of every character combination (0 - 256). It is highly  
+recommended that no devices are attached to ports in 
+in external loopback mode. The output will cause 
+terminals and printers to hang!
+<Send    >
+Send barber pole:
+
+This menu item allows the user to send a barber pole   
+to the selected port. The port configuration is 8 data  
+bits, 1 stop bit and no parity. Use this tool to test   
+wiring from to host computer to the device.
+<Register>
+Register Dump:
+
+This option displays a realtime window of the on-   
+board registers. The data displayed is in raw form   
+and only useful to Equinox technical personnel. It  
+is used to obtain valuable information about the 
+hardware status and various software flags.
+<Breakout>
+Breakout Box
+
+Select this item to use the graphical breakout box.  
+The breakout box allows the user to do real time
+monitoring of data and control signal leads, 
+calculated received and transmitted rates, XON/OFF  
+status and cumulative bi-directional character
+counts.
+<Data Sco>
+Data Scope
+
+The Data Scope function allows you captured the real time  
+data received and/or tranmitted from a port. During a 
+capture session the data activity is displayed on the 
+users screen. Additionly, the data may be saved to a file
+for later review.
+
+<Private >
+Private Flags
+
+This feature produces a listing of the private flags that  
+are enabled for a channel. Private flags control operation of 
+features such as transparent print and alternate baudrate
+configuration.
+<Check Mo>
+Check Monitors
+
+Select this item if you wish to confirm the integrity of Port  
+Monitor data bases for a device. It checks for duplicate 
+entries, existance and other mis-configurations. 
+
+<Modules >
+Modules
+
+This entry allows the user view a list of the modules currently  
+pushed on a device. Check for the module "ldterm", in all most  
+all cases this module must be present for a device to function
+properly. 
+<LBaud Ra>
+Baud Rate 
+
+Select this item to change the baud rate.
+<LVerity >
+Verity
+
+This option lets you disable or enable data verificaton
+during the loopback test.
+<LUpdate >
+Update
+
+This selection allows you to set the frequency  
+(in seconds) that the results are reported.
+
+The default is 1 seconds:
+<LErrors >
+Errors
+
+This options allows you to specify whether to stop or  
+continue when errors encountered. 
+
+The default is continue on errors.
+<LLoop Ty>
+Loop Type:
+
+Specity whether the hardware's internal loopback feature will  
+be enable or if the user will supply an external loopback
+connector.
+
+<LMode   >
+Mode
+
+This option allows you to select the mode the test will run in.
+
+< Port Se>
+Port Setup:
+
+Select this item if you wish to set port   
+configuration information. It can be used  
+to set up login ports, their speed, terminal
+type and SST custom features.
+<pname   >
+
+Enter the full pathname of the device.  
+
+Example: /dev/term/1a1
+<setupdat>
+
+ Enter the frequency in seconds to       
+ update date screen.
+
+
+< 24 Port>
+
+Run 24 port loopback test.  
+Insure that all ports are
+looped back.
+< 12 Port>
+ 
+Run 12 port loopback test.    
+Insure that all ports are
+looped back.
+< 8 Ports>
+ 
+Run 8 port loopback test.  
+Insure that all ports are
+looped back.
+< Single >
+Run Single port loopback:               
+
+Insure that the port in question is looped  
+back to itself(TD and RD tied together).  
+< Speed  >
+Set baudrate:
+
+This item is used to select the baudrate for  
+the loopback test. 
+
+The default is 38400 BPS.
+< Board  >
+Set board or mux:
+
+This item lets you select the group of 24 devices  
+which will be used for the loopback test.
+
+The default is the first board or mux.
+Note: The "Run" menu lets you select a single,
+8, 12, or 24 ports from the above mentioned group.  
+< Verify >
+Set verification flag:
+
+Set data verification flag.             
+
+< Update >
+Update frequency:
+
+This selection allows you to set the frequency  
+(in seconds) that the results are reported.
+
+The default is 6 seconds:
+<2400    >
+Baudrate:
+
+2400 Bit per seconds.   
+
+<9600    >
+Baudrate:
+
+9600 Bit per seconds.   
+
+<19200   >
+Baudrate:
+
+19200 Bit per seconds.   
+
+<38400   >
+Baudrate:
+
+38400 Bit per seconds.   
+<57600   >
+Baudrate:
+
+57600 Bit per seconds.   
+<76800   >
+Baudrate:
+
+76800 Bit per seconds.   
+<115200  >
+Baudrate:
+
+115200 Bit per seconds.   
+<230400  >
+Baudrate:
+
+230400 Bit per seconds.   
+<MPC_CDON>
+Private flag:
+
+ If MPC_CDON is set the device is set to 
+ CLOCAL processing by default. Specifically, 
+ the device can be openned without the 
+ presence of CARRIER or CD. This flag
+ may be toggled with following command:
+
+ eqnstty /dev/term/1a1 [-+][cd]
+
+<MPC_OUTC>
+
+ This flag indicates that driver has raised the 
+ outbound control signals. This typically means 
+ that DTR and RTS are set to an RS232 high.
+ This is a status flag only and cannot be set    
+ or reset by the user.
+
+<MPC_OPEN>
+
+ MPC_OPEN indicates that the device is open.
+ This is a status flag only and cannot be set    
+ or reset by the user.
+ 
+<MPC_LOOP>
+
+ The device is in internal loopback mode. This
+ causes data output to the device to be looped 
+ back internally. The data can subsequently be 
+ processed as input data. This feature is 
+ primarily used for diagnostic. This flag
+ may be toggled with following command:
+
+ eqnstty /dev/term/1a1 [-+][lb]
+
+<MPC_BLOC>
+
+ Device in has dropped the RTS signal. This
+ is a status flag only and cannot be set or  
+ reset by the user.
+ 
+<MPC_HIGH>
+
+ This flag informs the driver to map the low 
+ baud rates to extend baudrates above 38400 baud. 
+ The mapping is as follows:
+ 
+ B50  ----> 576000 bps
+ B75  ----> 768000 bps
+ B110 ----> 115200 bps
+ B134 ----> 230400 bps (if applicable: 8 board and panel)
+
+<INPUT   >
+Input:
+
+Select this item if you wish to monitor input data 
+only.
+
+<OUTPUT  >
+Output
+
+Select this item if you wish to monitor output data 
+only.
+
+<FULL DUP>
+Full Duplex:
+
+Select this item if you wish to monitor input and 
+output data.
+
+<SCOPEDIR>
+
+INPUT, OUTPUT, FULL DUPLEX
+
+Select this entry to modify the direction of the datascope. 
+For example, selecting INPUT causes the datascopy to monitor 
+input only.
+
+<BUFFSIZE>
+
+Buffer Size:
+
+This parameter allows you to select a 32, 64 or 
+128K capture buffer.
+
+<32K     >
+
+32K Buffer:
+
+Select this entry to capture up to 32K bytes of 
+data during a datascope session.
+
+<64K     >
+
+64K Buffer:
+
+Select this entry to capture up to 64K bytes of 
+data during a datascope session.
+
+<128K    >
+
+128K Buffer
+
+Select this entry to capture up to 128K bytes of 
+data during a datascope session.
+
+<BUFFULL >
+
+Buffer Full:
+
+This parameter allows to specify continue or 
+stop when the capture buffer is full. If you
+select continue the data is wrapped when the 
+buffer is full.
+
+<Continue>
+
+Continue:
+
+This selection instructs the datascope to continue 
+when the buffer is full. The data wraps in the 
+buffer when this entry is chosen.
+
+<Stop    >
+
+Stop:
+
+This selection instructs the datascope to stop
+when it reaches the end of the buffer. Any data 
+received or transmitted after the buffer is 
+full is lost.
+
+<DISPLAY >
+
+Display:
+
+This parameter allows you to specify "data only" 
+or "detail" which causes the datascope display
+the data only or a detailed display. The detailed 
+display includes control signals and the buffer's
+percentage full.
+
+<Data Onl>
+
+Data Only:
+
+This item instructs the datascope to display data 
+only during a capture sessions.
+
+<Show Det>
+
+Show Detail:
+
+This item instructs the datascope to display a 
+more detailed display. The detailed display 
+includes the channel's control signals and
+the buffers's percentage full.
+
+<STARTSCO>
+
+Start:
+
+This item starts the datascope.
+
+<Start Sc>
+
+Start:
+
+This item starts the datascope.
+
+<Review D>
+
+Review Data:
+
+This item allows you to review data 
+which was previously captured.
+
+<end     >

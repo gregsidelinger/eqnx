@@ -1,0 +1,139 @@
+#!/bin/sh
+# 
+# Equinox SST driver for Linux.
+#
+# Copyright (C) 1999-2007 Equinox Systems Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+# Equinox SST Loadable Module Initialization Script
+
+#
+# chkconfig: 2345 80 20
+# description: Loads Equinox SST device driver (eqnx)
+#
+
+### BEGIN INIT INFO
+# Provides:       eqnx
+# Required-Start: $syslog
+# Required-Stop:  $syslog
+# Default-Start:  2 3 5
+# Default-Stop:   0 1 6
+# Short-Description: eqnx device driver
+# Description:    eqnx device driver
+### END INIT INFO
+
+#
+# Respond to the way we were invoked
+#
+
+case "$1" in
+
+# start
+start)
+	KREL=`uname -r`
+	if [ -d /lib/modules/$KREL/kernel ] ; then
+        	INSTDIR=/lib/modules/$KREL/kernel/drivers/char
+	else
+        	INSTDIR=/lib/modules/$KREL/char
+	fi   
+
+	if grep eqnx /proc/modules > /dev/null ; then
+		echo "The Equinox SST driver is already loaded!"
+		exit 0
+	fi
+
+	KRELN=`uname -r | cut -b1-3`
+	EQUINOX_MODULE=$INSTDIR/eqnx.ko
+	if [ "$KRELN" = "2.2" ] ; then
+	  EQUINOX_MODULE=$INSTDIR/eqnx.o
+	fi
+	if [ "$KRELN" = "2.4" ] ; then
+	  EQUINOX_MODULE=$INSTDIR/eqnx.o
+	fi
+
+	if test -z "$EQUINOX_MODULE" ; then
+		echo "Couldn't find the Equinox SST loadable kernel module!"
+		exit 1
+	fi
+
+	# load the driver
+	if /sbin/insmod $EQUINOX_MODULE; then :; else
+		exit $?
+	fi
+
+	# create device files
+	rm -f /etc/eqnx/database
+	/usr/bin/ssmkn
+
+	if [ -d /var/lock/subsys ] ; then
+		touch /var/lock/subsys/eqnx
+	fi
+
+	exit 0
+	;;
+
+# stop
+stop)
+	retval=0
+	/sbin/lsmod | grep -q eqnx
+	if [ $? != 0 ] 
+	then
+		echo "eqnx driver is not loaded"
+	else
+		retval=`/sbin/lsmod | grep eqnx | cut -c31-33`
+	fi
+
+	if [ $retval != 0 ] ; then
+		echo "Avocent eqnx driver not stopped because its busy"
+		exit 0
+	fi
+
+	# remove device files and unload driver
+	/usr/bin/ssrm -Cq
+	if [ $? != 0 ] 
+	then
+		exit 1
+	fi	
+
+	if [ -d /var/lock/subsys ] ; then
+		rm -f /var/lock/subsys/eqnx
+	fi
+
+	exit 0
+	;;
+
+# restart
+restart|reload)
+	$0 stop
+	$0 start
+	exit 0
+	;;
+
+# status
+status)
+	retval=0
+	/sbin/lsmod | grep -q eqnx
+	if [ $? != 0 ] 
+	then
+		echo "eqnx driver is not loaded"
+	else
+		retval=`/sbin/lsmod | grep eqnx | cut -c31-33`
+		echo "eqnx driver is loaded with $retval active device opens"
+	fi
+	exit $retval
+	;; 
+
+esac
