@@ -137,6 +137,11 @@ __attribute__((section("__versions"))) = {
 #define eqn_fatal_signal (signal_pending(current))
 #endif
 
+// Support 3.7 and above
+#if (LINUX_VERSION_CODE >= 198409)
+struct tty_port * eqnx_ports;
+#endif
+
 /*
 ** Maximum number of boards, may be redefined
 */
@@ -1139,9 +1144,12 @@ modem_wait:
 		else
 			*tty->termios = *mpc->callouttermios;
 #endif
-#else
+#elif (LINUX_VERSION_CODE < 198409)
 		/* 2.6 kernels */
 		*tty->termios = *mpc->normaltermios;
+#else
+		tty->termios = *mpc->normaltermios;
+
 #endif
 #ifdef RS422
 		/*    force CLOCAL on for RS422 ports */
@@ -1149,7 +1157,11 @@ modem_wait:
 			mpc->mpc_icp->lmx[mpc->mpc_lmxno].lmx_id == 
 			LMX_PM16_422) {
 			tp = mpc->mpc_tty;
+#if (LINUX_VERSION_CODE < 198409)
 			tp->termios->c_cflag |= CLOCAL;
+#else
+			tp->termios.c_cflag |= CLOCAL;
+#endif
 		}
 #endif	/* RS422 */
 
@@ -1165,8 +1177,14 @@ modem_wait:
 		clear_bit(TTY_IO_ERROR, &tty->flags);
 	}
 	tp = mpc->mpc_tty;
-
+#if (LINUX_VERSION_CODE < 198409)
 	if (tp->termios == NULL) {
+#else
+	// There has to be a better way to check to make sure
+	// termios is iniaized but I'm not a good programmer
+	if (&tp->termios.c_iflag == NULL) {
+#endif
+
 #if     (LINUX_VERSION_CODE < 132608)
 		/* 2.2 and 2.4 kernels */
 		if (tty->driver.subtype == SERIAL_TYPE_NORMAL)
@@ -1176,9 +1194,12 @@ modem_wait:
 		else
 			*tp->termios = *mpc->callouttermios;
 #endif
-#else
+#elif (LINUX_VERSION_CODE < 198409)
 		/* 2.6 kernels */
 		*tp->termios = *mpc->normaltermios;
+#else
+		/* 3.7 and above */
+		tp->termios = *mpc->normaltermios;
 #endif
 	}
 
@@ -1284,7 +1305,11 @@ modem_wait:
 					break;
 				}
 				if (((mpc->flags & ASYNC_CLOSING) == 0) &&
+#if (LINUX_VERSION_CODE < 198409)
 				    ((tp->termios->c_cflag & CLOCAL) || 
+#else
+				    ((tp->termios.c_cflag & CLOCAL) || 
+#endif
 				     (mpc->carr_state)) &&
 
 #if	(LINUX_VERSION_CODE < 132608)
@@ -1358,9 +1383,11 @@ modem_wait:
 		else
 			*tp->termios = *mpc->callouttermios;
 #endif
-#else
+#elif (LINUX_VERSION_CODE < 198409)
 	/* 2.6 kernels and leter */
 	*tp->termios = *mpc->normaltermios;
+#else
+	tp->termios = *mpc->normaltermios;
 #endif
 
 	}
@@ -1471,7 +1498,11 @@ static void eqnx_close(struct tty_struct * tty, struct file * filp)
 #endif
 
 	if (mpc->flags & ASYNC_NORMAL_ACTIVE)
+#if (LINUX_VERSION_CODE < 198409)
 		*mpc->normaltermios = *tty->termios;
+#else
+		*mpc->normaltermios = tty->termios;
+#endif
 #if (LINUX_VERSION_CODE < 132096)
 	if (mpc->flags & ASYNC_CALLOUT_ACTIVE)
 		*mpc->callouttermios = *tty->termios;
@@ -1492,7 +1523,11 @@ static void eqnx_close(struct tty_struct * tty, struct file * filp)
 	mpc->flags &= ~ASYNC_INITIALIZED;
 	if(win16) 
 	      mega_push_win(mpc, 0);
+#if (LINUX_VERSION_CODE < 198409)
 	if (tty->termios->c_cflag & HUPCL ) {
+#else
+	if (tty->termios.c_cflag & HUPCL ) {
+#endif
 		mpc->flags &= ~ASYNC_INITIALIZED;
 		(void) megamodem(d, TURNOFF);
 	}
@@ -2441,7 +2476,11 @@ static void eqnx_set_termios(struct tty_struct *tty,
 #ifdef DEBUG
 	printk("eqnx_set_termios: trying set termios for %d\n", d);
 #endif
+#if (LINUX_VERSION_CODE < 198409)
 	tiosp = tty->termios;
+#else
+	tiosp = &tty->termios;
+#endif
 	if ((tiosp->c_cflag == old->c_cflag) && 
 		(tiosp->c_iflag == old->c_iflag) &&
 		(tiosp->c_cc[VSTOP] == old->c_cc[VSTOP]) &&
@@ -2649,14 +2688,22 @@ static void eqnx_hangup(struct tty_struct *tty)
 	if(win16) 
 	      mega_push_win(mpc, 0);
 	if (mpc->flags & ASYNC_NORMAL_ACTIVE)
+#if (LINUX_VERSION_CODE < 198409)
 		*mpc->normaltermios = *tty->termios;
+#else
+		*mpc->normaltermios = tty->termios;
+#endif
 #if (LINUX_VERSION_CODE < 132096)
 	if (mpc->flags & ASYNC_CALLOUT_ACTIVE)
 		*mpc->callouttermios = *tty->termios;
 #endif
 	if (tty == eqnx_txcooktty)
 		eqnx_flush_chars_locked(tty);
+#if (LINUX_VERSION_CODE < 198409)
 	if (tty->termios->c_cflag & HUPCL ){
+#else
+	if (tty->termios.c_cflag & HUPCL ){
+#endif
 		megamodem(d, TURNOFF);
 	}
 	 mpc->mpc_flags &= ~(MPC_SOFTCAR|MPC_DIALOUT|MPC_MODEM|MPC_DIALIN|MPC_CTS);
@@ -4557,6 +4604,12 @@ void cleanup_module(void)
 #else
 	/* 2.6.26+ kernels */
 	if (eqnx_driver) {
+#if (LINUX_VERSION_CODE >= 198409)
+		// Clean up all of our ports
+		for (i=0; i < eqnx_driver->num; i++) 
+			tty_port_destroy(&eqnx_ports[i]);
+		kfree(eqnx_ports);
+#endif
 		n = tty_unregister_driver(eqnx_driver);
 		if (n) {
 			printk("eqnx: Failed to unregister tty driver, errno = %d\n", n);
@@ -4706,9 +4759,13 @@ void cleanup_module(void)
 
 #if	(LINUX_VERSION_CODE < 132634)
 	/* 2.6.25 and earlier kernels */
-#else
+#elif (LINUX_VERSION_CODE < 198409)
 	/* 2.6.26+ kernels */
 	vfree(eqnx_driver->name);
+	put_tty_driver(eqnx_driver);
+#else
+	if(eqnx_driver) 
+		vfree(eqnx_driver->name);
 	put_tty_driver(eqnx_driver);
 #endif
 
@@ -5917,9 +5974,15 @@ static int megamodem(int d, int cmd)
       if (mpc->mpc_param & IOCTRTS)
           cur &= ~TX_HFC_RTS;
       if (mpc->mpc_tty) {
+#if (LINUX_VERSION_CODE < 198409)
           if (mpc->mpc_tty->termios)
               if (mpc->mpc_tty->termios->c_cflag & CRTSCTS)
                   cur &= ~TX_HFC_RTS;
+#else
+          if (&mpc->mpc_tty->termios.c_cflag != NULL)
+              if (mpc->mpc_tty->termios.c_cflag & CRTSCTS)
+                  cur &= ~TX_HFC_RTS;
+#endif
       }
 	      
       if((rx_ctrl_sig & 0x2020) == 0x2020)
@@ -5972,7 +6035,11 @@ ushort d, e;
   mpc = &meg_chan[chan];
   if (mpc->mpc_tty == (struct tty_struct *) NULL)
 	return(0);
+#if (LINUX_VERSION_CODE < 198409)
   tiosp = mpc->mpc_tty->termios;
+#else
+  tiosp = &mpc->mpc_tty->termios;
+#endif
 
 #ifdef	DEBUG_LOCKS
    if (!(spin_is_locked(&mpc->mpc_mpd->mpd_lock))) {
@@ -7476,7 +7543,11 @@ printk("ev_lmx_chg  rng_last=%x  port=%d\n",icp->icp_rng_last,port);
 /* Defer processing to every 40 mills (<= 115Kb)*/
 /* Defer processing to every 20 mills (== 230Kb)*/
 if (mpc->mpc_tty != (struct tty_struct *) NULL){
+#if (LINUX_VERSION_CODE < 198409)
   	unsigned int baud = mpc->mpc_tty->termios->c_cflag & CBAUD;
+#else
+  	unsigned int baud = mpc->mpc_tty->termios.c_cflag & CBAUD;
+#endif
 	if (baud == B38400){
 		if ((mpc->flags & ASYNC_SPD_MASK) == ASYNC_SPD_HI)
 			baud = B57600;
@@ -8520,7 +8591,11 @@ static void megainput( register struct mpchan *mpc, unsigned long flags)
 			SSTMINOR(mpc->mpc_major, mpc->mpc_minor),
 			tp->flip.count);
 #endif
+#if (LINUX_VERSION_CODE < 198409)
 	tiosp = tp->termios;
+#else
+	tiosp = &tp->termios;
+#endif
 	mpc->mpc_flags &= ~MPC_RXFLUSH;
 
 	/*
@@ -9033,7 +9108,11 @@ static void megasint(register struct mpchan *mpc, unsigned long flags)
 
 	if (mpc->mpc_tty == (struct tty_struct *) NULL)
 		return;
+#if (LINUX_VERSION_CODE < 198409)
         tiosp = mpc->mpc_tty->termios;
+#else
+        tiosp = &mpc->mpc_tty->termios;
+#endif
 	if(mpc->mpc_cin_events & EV_BREAK_CNG){	
 		if (((tiosp->c_iflag & IGNBRK) == 0) &&
       			(tiosp->c_iflag & BRKINT )){
@@ -9333,7 +9412,11 @@ ioctl_modem_wait:
 		}
 		break;
 	case TIOCGSOFTCAR:
+#if (LINUX_VERSION_CODE < 198409)
 		put_fs_int(((tty->termios->c_cflag & CLOCAL) ? 1 : 0), 
+#else
+		put_fs_int(((tty->termios.c_cflag & CLOCAL) ? 1 : 0), 
+#endif
 				(unsigned int *) arg);
 		break;
 	case TIOCSSOFTCAR:
@@ -9342,7 +9425,11 @@ ioctl_modem_wait:
 #else
 		get_user(arg_int, (unsigned int *) arg);
 #endif
+#if (LINUX_VERSION_CODE < 198409)
 		tty->termios->c_cflag = (tty->termios->c_cflag & ~CLOCAL) | 
+#else
+		tty->termios.c_cflag = (tty->termios.c_cflag & ~CLOCAL) | 
+#endif
 			(arg_int ? CLOCAL : 0);
 		break;
 	case TIOCMGET:
@@ -9498,7 +9585,11 @@ static int set_modem_info(struct mpchan *mpc, unsigned int cmd,
 	unsigned int arg, temp;
 	icpoaddr_t icpo = mpc->mpc_icpo;
 	unsigned long flags;
+#if (LINUX_VERSION_CODE < 198409)
 	struct _termios *term = tty->termios;
+#else
+	struct _termios *term = &tty->termios;
+#endif
 
 #if (EQNX_VERSION_CODE < 131328)  
 	arg = get_fs_long((unsigned long *) value);
@@ -9559,7 +9650,11 @@ static int megastty( struct mpchan *mpc, struct tty_struct *tty,
 {
 	int win16;
 	int rc = 0;
+#if (LINUX_VERSION_CODE < 198409)
 	struct _termios *tp = tty->termios;
+#else
+	struct _termios *tp = &tty->termios;
+#endif
 	struct marb_struct *curmarb;
 	struct lmx_struct *lmx;
 	int slot_chan, port, ldv;
@@ -9596,7 +9691,11 @@ static int megastty( struct mpchan *mpc, struct tty_struct *tty,
 
   case 17:
 	tp->c_cflag |= CRTSCTS;
+#if (LINUX_VERSION_CODE < 198409)
 	if((mpc->mpc_tty->termios->c_cflag & RTSFLOW) == 0) {
+#else
+	if((mpc->mpc_tty->termios.c_cflag & RTSFLOW) == 0) {
+#endif
 		if((tp->c_cflag & CRTSCTS) == 0)
 		   rc = -EINVAL;
 		else
@@ -10367,7 +10466,11 @@ STATIC long eqnx_diagioctl(struct file *fp, unsigned int cmd,
 		dp.ioctl_version = IOCTL_VERSION;
 		dp.mp_state = mpc->flags;
 		if (mpc->flags & ASYNC_INITIALIZED){
+#if (LINUX_VERSION_CODE < 198409)
 			tp = mpc->mpc_tty->termios;
+#else
+			tp = &mpc->mpc_tty->termios;
+#endif
 			dp.mp_iflag = tp->c_iflag;
 			dp.mp_oflag = tp->c_oflag;
 			dp.mp_lflag = tp->c_lflag;
@@ -10622,14 +10725,18 @@ STATIC long eqnx_diagioctl(struct file *fp, unsigned int cmd,
 			chstat.ioctl_version = IOCTL_VERSION;
 
 			if (mpc->flags & ASYNC_INITIALIZED){
-				chstat.c_iflag = 
-					mpc->mpc_tty->termios->c_iflag;
-				chstat.c_oflag = 
-					mpc->mpc_tty->termios->c_oflag;
-				chstat.c_cflag = 
-					mpc->mpc_tty->termios->c_cflag;
-				chstat.c_lflag = 
-					mpc->mpc_tty->termios->c_lflag;
+#if (LINUX_VERSION_CODE < 198409)
+				chstat.c_iflag = mpc->mpc_tty->termios->c_iflag;
+				chstat.c_oflag = mpc->mpc_tty->termios->c_oflag;
+				chstat.c_cflag = mpc->mpc_tty->termios->c_cflag;
+				chstat.c_lflag = mpc->mpc_tty->termios->c_lflag;
+
+#else
+				chstat.c_iflag = mpc->mpc_tty->termios.c_iflag;
+				chstat.c_oflag = mpc->mpc_tty->termios.c_oflag;
+				chstat.c_cflag = mpc->mpc_tty->termios.c_cflag;
+				chstat.c_lflag = mpc->mpc_tty->termios.c_lflag;
+#endif
 			}
 			else {
 				chstat.c_iflag = 0;
@@ -11732,7 +11839,22 @@ int register_eqnx_dev(void)
 	tty->init_termios.c_cflag =
 				  B38400 | CS8 | CREAD | HUPCL;
 
+#if (LINUX_VERSION_CODE < 198409)
 	tty->flags		= TTY_DRIVER_REAL_RAW | TTY_DRIVER_DYNAMIC_DEV;
+#else
+	tty->flags		= TTY_DRIVER_REAL_RAW | TTY_DRIVER_DYNAMIC_DEV | TTY_DRIVER_DYNAMIC_ALLOC;
+
+	eqnx_ports = kcalloc(range, sizeof(*eqnx_ports), GFP_KERNEL);
+	// Greg added to init ports
+	for (i=0; i < range; i++) {
+		tty_port_init(&eqnx_ports[i]);
+		// I'm not sure how to regegister the port devices
+		// so I use the link
+		//tty_port_register_device(&eqnx_ports[i], tty, i,  NULL);
+		tty_port_link_device(&eqnx_ports[i], tty, i);
+	}
+
+#endif
 
 	tty_set_operations(tty, &eqnx_ops);
 
@@ -12878,7 +13000,12 @@ ramp_termios:
         updated = 1;
      if (mpc->mpc_tty != (struct tty_struct *) NULL){ /* shashi: 03/22/98 */
       /* setup pointers for general use */
+#if (LINUX_VERSION_CODE < 198409)
         tiosp = mpc->mpc_tty->termios;
+#else
+        tiosp = &mpc->mpc_tty->termios;
+#endif
+
   	icpi = mpc->mpc_icpi;
   	icpo = mpc->mpc_icpo;
   	/* CLOCAL and carrier detect parameters */
