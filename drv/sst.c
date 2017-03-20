@@ -8642,10 +8642,15 @@ static void megainput( register struct mpchan *mpc, unsigned long flags)
 
 #if	(LINUX_VERSION_CODE >= 132624)
 	/* 2.6.16+ kernels */
-	// removed in 3.16.  Need to update if statement
-	//rcv_cnt = tty_prepare_flip_string_flags(tp, &cbuf, &fbuf, rcv_cnt);
-	//if (rcv_cnt <= 0)
-	//	return;
+#if	(LINUX_VERSION_CODE <= KERNEL_VERSION(3,16,0) )
+	// tty_prepare_flip_string_flags removed in 3.16.
+	rcv_cnt = tty_prepare_flip_string_flags(tp, &cbuf, &fbuf, rcv_cnt);
+	if (rcv_cnt <= 0)
+		return;
+#endif
+
+
+
 #else
 	cbuf = tp->flip.char_buf;
 	fbuf = tp->flip.flag_buf;
@@ -8986,11 +8991,14 @@ static void megainput( register struct mpchan *mpc, unsigned long flags)
 #endif
 
 #if	(LINUX_VERSION_CODE >= 132624)
-	/* 2.6.16+ kernels */
-	// Looks to have changed in 3.10
-	// Need to update if statement
-	//tty_flip_buffer_push(tp);
+
+#if	(LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,0) )
 	tty_flip_buffer_push(eqnx_ports);
+#else
+	/* 2.6.16+ kernels */
+	tty_flip_buffer_push(tp);
+#endif
+
 #else
 
 	/*
