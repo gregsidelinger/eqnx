@@ -33,7 +33,7 @@ HFILES = ../include/icp.h  ../include/eqnx.h \
 INCLUDES = -I$(INC) -I./ 
 MODOBJS = sst.o 
 MCFLAGS = -D__KERNEL__ -Wall -Wstrict-prototypes -O2 -pipe \
-	-DMODULE -DLINUX  -D_LOOSE_KERNEL_NAMES
+	-DMODULE -DLINUX  -D_LOOSE_KERNEL_NAMES -Wno-incompatible-pointer-types -Wno-error=implicit-function-declaration
 NO_OPT_MCFLAGS = -D__KERNEL__ -Wall -Wstrict-prototypes -pipe
 MCFLAGS2 = 
 CPOBJS = eqnx.o
@@ -45,11 +45,15 @@ DRV = eqnx
 # Figure out if kernel is 2.2/2.4 or 2.6+
 KVER := $(shell uname -r | cut -b1-3)
 K26 := 1
+K41 := 1
 ifeq (2.2,$(KVER))
    K26 := 0
 endif
 ifeq (2.4,$(KVER))
    K26 := 0
+endif
+ifeq (4.1,$(KVER))
+	K41:=0
 endif
 
 # Kernel Search Path
@@ -117,8 +121,15 @@ endif
 ifneq (,$(wildcard $(KINC)/linux/version.h))
 	VERSION_FILE := $(KINC)/linux/version.h
 else
+ifneq (,$(wildcard $(KINC)/generated/uapi/linux/version.h))
+	VERSION_FILE := $(KINC)/generated/uapi/linux/version.h
+else
 	VERSION_FILE := $(KINC2)/linux/version.h
 endif
+endif
+
+
+
 ifneq (,$(wildcard $(KINC)/linux/config.h))
 	CONFIG_FILE := $(KINC)/linux/config.h
 else
@@ -261,6 +272,10 @@ MCFLAGS += -DVERSNUM=\"$(REL)\"
 
 # Changes for 2.6 kernel
 ifeq (1,$(K26))
+   CPOBJS = eqnx.ko
+endif
+
+ifeq (1,$(K41))
    CPOBJS = eqnx.ko
 endif
 
