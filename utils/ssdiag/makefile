@@ -42,10 +42,10 @@ install: ssdiag sscode
 
 
 ssdiag: u4.o ports.o screen.o 
-	$(CC) $(MCFLAGS) $(LIBS) u4.o screen.o ports.o -ossdiag
+	$(CC) $(MCFLAGS) $(LIBS) u4.o screen.o ports.o $(LIBS) -ossdiag
 
 sscode: ccode.o screen.o 
-	$(CC) $(MCFLAGS) $(LIBS) ccode.o screen.o -osscode
+	$(CC) $(MCFLAGS) $(LIBS) ccode.o screen.o $(LIBS) -osscode
 
 u4.o: u4.c
 	$(CC) $(MCFLAGS) $(MCFLAGS2) $(INCLUDES) -c u4.c

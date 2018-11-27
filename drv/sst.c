@@ -110,6 +110,8 @@ __attribute__((section("__versions"))) = {
 #if	(LINUX_VERSION_CODE >= 132608)
 /* 2.6 kernels and after */
 #include <linux/pci.h>
+#include <linux/sched/signal.h>
+#include <linux/timer.h>
 #endif
 
 /*
@@ -882,8 +884,15 @@ struct tty_driver *eqnx_callout_driver;
 struct tty_struct **eqnx_ttys;
 struct _termios **eqnx_termios;
 struct _termios **eqnx_termioslocked;
+#if (EQNX_VERSION_CODE > 266002 )
+DEFINE_TIMER(eqnx_ramp_timer,&eqn_ramp_admin);
+DEFINE_TIMER(lmx_wait_timer, &mega_rdv_wait);
+DEFINE_TIMER(eqnx_timer,&sstpoll);
+#else
 static struct timer_list lmx_wait_timer;
 static struct timer_list eqnx_timer, eqnx_ramp_timer;
+#endif
+
 void sstpoll(unsigned long arg);
 void eqn_ramp_admin(unsigned long arg);
 
@@ -4487,13 +4496,20 @@ printk("eqnx_init:queue size for board %d = %d\n\n", k, mpd->mpd_hwq->hwq_size);
     
 	if (register_eqnx_dev() != 0)
 		return(-1);
+#if (EQNX_VERSION_CODE >=  266002 )
 
+	/*DEFINE_TIMER(eqnx_timer,&sstpoll);*/
+	eqnx_timer.expires = jiffies + MPTIMEO;
+	eqnx_timer.function = &sstpoll;
+	add_timer(&eqnx_timer);
+	
+#else
 	init_timer(&eqnx_timer);
 	eqnx_timer.expires = jiffies + MPTIMEO;
 	eqnx_timer.data = 0;
 	eqnx_timer.function = &sstpoll;
 	add_timer(&eqnx_timer);
-
+#endif
 #ifndef MODULE
 	kmem_start = eqnx_memhalt();
 #endif
@@ -7931,11 +7947,18 @@ icpb = (rx_locks & LOCK_A) ? &icpi->ssp.cin_bank_b : &icpi->ssp.cin_bank_a;
 			/*
 	 		* Set up the timer channel.  
 	 		*/
+#if (EQNX_VERSION_CODE >=  266002 )
+/*	DEFINE_TIMER(eqnx_ramp_timer,&eqn_ramp_admin); */
+		eqnx_ramp_timer.expires = jiffies + 210;
+		/* no data field in the new struct */	
+			add_timer(&eqnx_ramp_timer);
+#else 
 			init_timer(&eqnx_ramp_timer);
 			eqnx_ramp_timer.expires = jiffies + 210;
 			eqnx_ramp_timer.data = 0;
 			eqnx_ramp_timer.function = &eqn_ramp_admin;
 			add_timer(&eqnx_ramp_timer);
+#endif
                         retv = 0;
 	          }
                   eqn_num_ramps++;
@@ -8367,10 +8390,17 @@ dev_bad:
 	  /* wait for link to settle down */
           lmx->lmx_rmt_active = DEV_WAITING;
           if ( lmx->lmx_wait == -1 ){
+#if (EQNX_VERSION_CODE >=  266002 )
+	/* DEFINE_TIMER(lmx_wait_timer, &mega_rdv_wait);*/
+#else
 		init_timer(&lmx_wait_timer);
+#endif
 		lmx_wait_timer.expires = 100;
+#if (EQNX_VERSION_CODE >=  266002 )
+#else
 		lmx_wait_timer.data = (unsigned long) mpc;
 		lmx_wait_timer.function = &mega_rdv_wait;
+#endif
 		add_timer(&lmx_wait_timer);
 	  }
 	}  
@@ -8543,7 +8573,32 @@ static void megatxint(struct mpchan *mpc)
 #endif
 		wake_up_interruptible(&tty->write_wait);
 }
+/**
+ * tty_prepare_flip_string_flags - make room for characters
+ * @port: tty port
+ * @chars: return pointer for character write area
+ * @flags: return pointer for status flag write area
+ * @size: desired size
+ *
+ * Prepare a block of space in the buffer for data. Returns the length
+ * available and buffer pointer to the space which is now allocated and
+ * accounted for as ready for characters. This is used for drivers
+ * that need their own block copy routines into the buffer. There is no
+ * guarantee the buffer is a DMA target!
+ */
 
+int tty_prepare_flip_string_flags(struct tty_port *port,
+ unsigned char **chars, char **flags, size_t size)
+{
+ int space = tty_buffer_request_room(port, size);
+ if (likely(space)) {
+ struct tty_buffer *tb = port->buf.tail;
+ *chars = char_buf_ptr(tb, tb->used);
+ *flags = flag_buf_ptr(tb, tb->used);
+ tb->used += space;
+ }
+ return space;
+}
 /*
 ** megainput(mpc, flags)
 **
@@ -10257,7 +10312,11 @@ STATIC long eqnx_diagioctl(struct file *fp, unsigned int cmd,
 #if (LINUX_VERSION_CODE >= 132644)
 /* 2.6.36+ kernels */
 	struct inode * ip;
+#if (EQNX_VERSION_CODE >=  266002 )
+	ip = fp->f_path.dentry;
+#else
 	ip = fp->f_dentry->d_inode;
+#endif
 #endif
 
 #ifdef DEBUG
@@ -11226,7 +11285,11 @@ static int eqnx_diagread(struct inode *ip, struct file *fp, char *buf,
 	struct dentry *dent;
 	struct inode *ip;
 	
+#if (EQNX_VERSION_CODE >=  266002 )
+	dent = fp->f_path.dentry;
+#else
 	dent = fp->f_dentry;
+#endif
 	ip = dent->d_inode;
 #endif
 	d = MINOR(ip->i_rdev) - 1;
