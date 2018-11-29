@@ -1,6 +1,6 @@
 Summary:	Device driver/utilities for Equinox SST SuperSerial family
 Name:		eqnx
-Version:	4.12e
+Version:	4.12f
 Release:	1
 License:	GPL
 Group:		Applications/Communications
@@ -9,7 +9,7 @@ Vendor:		Avocent, Connectivity and Control Division
 Packager:	Mike Straub <michael.straub@avocent.com>
 ExclusiveOS:	Linux
 BuildRoot:	/var/tmp/%{name}-build
-Source:		eqnx-4.12e-1.tar.gz
+Source:		eqnx-4.12f-1.tar.gz
 
 %description
 Provides device driver and diagnostic utilities for Equinox SuperSerial
@@ -20,12 +20,12 @@ ISA and EISA are not available on Itanium systems.
 
 Brief description of installation (for more, see installation notes):
 1) install the source RPM:
-	rpm -i eqnx-4.12e-1.src.rpm		(wherever RPM is located)
+	rpm -i eqnx-4.12f-1.src.rpm		(wherever RPM is located)
 2) build the binary RPM:
 	rpmbuild (or rpm) -bb <rpm directory>/SPECS/eqnx.spec
 	(note: the RPM directory will vary based on linux distribution)
 3) install binary RPM:
-	rpm -i <rpm directory>/RPMS/<ARCH>/eqnx-4.12e-1.<ARCH>.rpm
+	rpm -i <rpm directory>/RPMS/<ARCH>/eqnx-4.12f-1.<ARCH>.rpm
 4) load driver and configure device files:
 	/usr/sbin/rc.eqnx start
 5) make driver restarted at boot time:
